@@ -1,0 +1,66 @@
+# Rebuilds site/data.json from the NHL APIs every morning and publishes the site to GitHub Pages.
+# 08:00 UTC = 10:00/11:00 Finnish time, 03:00/04:00 ET: every game of the previous ET day is final.
+name: Daily data refresh
+
+on:
+  schedule:
+    - cron: "0 8 * * *"
+  workflow_dispatch:        # "Run workflow" button in the Actions tab
+  push:
+    branches: [main]        # redeploy when you edit roster.json or the page
+
+permissions:
+  contents: write           # heartbeat commit (see last step)
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      # Fails (and stops the deploy) if the NHL data looks wrong. Yesterday's site stays up.
+      - name: Build data.json
+        run: python scripts/build_data.py --out site/data.json
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      # GitHub disables scheduled workflows in public repos after 60 days without commits.
+      # A tiny commit on the 1st and 15th keeps the schedule alive through the season.
+      - name: Heartbeat commit
+        if: github.event_name == 'schedule'
+        run: |
+          d=$(date -u +%d)
+          if [ "$d" = "01" ] || [ "$d" = "15" ]; then
+            date -u +"%Y-%m-%dT%H:%M:%SZ" > .heartbeat
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add .heartbeat
+            git commit -m "Heartbeat: keep scheduled refresh enabled" && git push
+          fi
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

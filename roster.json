@@ -1,0 +1,101 @@
+{
+  "note": "Default roster. The site keeps your edits in the browser; use Export on the Roster tab and paste the result here to share it across devices.",
+  "players": [
+    {
+      "id": 8476459,
+      "name": "Mika Zibanejad",
+      "status": "Healthy",
+      "active": false
+    },
+    {
+      "id": 8476881,
+      "name": "Tomas Hertl",
+      "status": "Healthy",
+      "active": false
+    },
+    {
+      "id": 8477404,
+      "name": "Jake Guentzel",
+      "status": "Healthy",
+      "active": false
+    },
+    {
+      "id": 8478009,
+      "name": "Ilya Sorokin",
+      "status": "Healthy",
+      "active": false
+    },
+    {
+      "id": 8478460,
+      "name": "Zach Werenski",
+      "status": "Healthy",
+      "active": false
+    },
+    {
+      "id": 8478493,
+      "name": "Joel Eriksson Ek",
+      "status": "Healthy",
+      "active": false
+    },
+    {
+      "id": 8478872,
+      "name": "Karel Vejmelka",
+      "status": "Healthy",
+      "active": false
+    },
+    {
+      "id": 8479337,
+      "name": "Alex DeBrincat",
+      "status": "Healthy",
+      "active": false
+    },
+    {
+      "id": 8479425,
+      "name": "Filip Hronek",
+      "status": "Healthy",
+      "active": false
+    },
+    {
+      "id": 8479987,
+      "name": "Morgan Geekie",
+      "status": "Healthy",
+      "active": false
+    },
+    {
+      "id": 8480027,
+      "name": "Jason Robertson",
+      "status": "Healthy",
+      "active": false
+    },
+    {
+      "id": 8480336,
+      "name": "Sean Walker",
+      "status": "Healthy",
+      "active": false
+    },
+    {
+      "id": 8482105,
+      "name": "Jake Sanderson",
+      "status": "Healthy",
+      "active": false
+    },
+    {
+      "id": 8482116,
+      "name": "Tim Stutzle",
+      "status": "Healthy",
+      "active": false
+    },
+    {
+      "id": 8482730,
+      "name": "Brandt Clarke",
+      "status": "Healthy",
+      "active": false
+    },
+    {
+      "id": 8484166,
+      "name": "Adam Fantilli",
+      "status": "Healthy",
+      "active": false
+    }
+  ]
+}

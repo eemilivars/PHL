@@ -9,10 +9,13 @@ in the browser, so this script only collects and validates data.
 Sources
   api.nhle.com/stats/rest/en   skater summary / realtime / faceoffwins, goalie summary,
                                team summary, team list
-  api-web.nhle.com/v1          current team rosters (who plays where today), schedule
+  api-web.nhle.com/v1          current team rosters (who plays where today), schedule,
+                               player game logs (fallback for history)
+  site/roster.json             the players whose game-by-game history is stored
 
 Output: site/data.json (schema documented in README.md, "data.json" section)
-Requests per run: about 60 (32 rosters, 3 schedule weeks, ~25 stats reports)
+Requests per run: about 110 (32 rosters, 3 schedule weeks, ~30 league stats reports,
+about 3 per rostered skater and 1 per rostered goalie for history)
 
 Exit code is non-zero if validation fails. The GitHub Action then stops before
 deploying, so the site keeps yesterday's data instead of publishing broken data.
@@ -22,6 +25,7 @@ import datetime as dt
 import json
 import sys
 import time
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import requests
@@ -29,6 +33,7 @@ import requests
 WEB = "https://api-web.nhle.com/v1"
 STATS = "https://api.nhle.com/stats/rest/en"
 ET = ZoneInfo("America/New_York")  # NHL and Yahoo game dates are Eastern Time
+ROSTER_FILE = Path(__file__).resolve().parent.parent / "site" / "roster.json"
 
 SESSION = requests.Session()
 SESSION.headers["User-Agent"] = "phl-lineup/1.0 (personal fantasy hockey tool)"
@@ -36,13 +41,16 @@ SESSION.headers["User-Agent"] = "phl-lineup/1.0 (personal fantasy hockey tool)"
 # Order of values in the compact per-player arrays written to data.json
 SKATER_FIELDS = ["gp", "g", "a", "pm", "ppp", "gwg", "sog", "fw", "hit", "blk", "toi"]
 GOALIE_FIELDS = ["gp", "gs", "w", "sv", "sa", "so"]
+# Per-game history rows: [date, *fields]. Skaters drop time on ice.
+HIST_SKATER_FIELDS = SKATER_FIELDS[:-1]
+HIST_GOALIE_FIELDS = GOALIE_FIELDS
 
 WARNINGS = []
 
 
 def warn(msg):
     WARNINGS.append(msg)
-    print("WARNING:", msg, file=sys.stderr)
+    print("WARNING:", msg, file=sys.stderr, flush=True)
 
 
 def get(url, params=None, tries=4):
@@ -50,7 +58,7 @@ def get(url, params=None, tries=4):
     last = None
     for i in range(tries):
         try:
-            r = SESSION.get(url, params=params, timeout=30)
+            r = SESSION.get(url, params=params, timeout=60)
             if r.status_code == 200:
                 return r.json()
             last = f"HTTP {r.status_code}: {r.text[:200].strip()}"
@@ -79,52 +87,89 @@ def stats_report(kind, report, cayenne, aggregate=False, is_game=False):
     return get(f"{STATS}/{kind}/{report}", params).get("data", [])
 
 
-def skater_block(cayenne, aggregate=False, is_game=False):
-    """Merge summary + realtime + faceoffwins into {playerId: {field: value}}."""
+# ---------------------------------------------------------------------------
+# Folding report rows into per-player totals.
+#
+# Rows are ADDED per player, never overwritten. That makes the result correct whether the
+# API returns one row per player (season or date-range totals), one row per team stint for
+# a traded player, or one row per game.
+# ---------------------------------------------------------------------------
+def games_in(row):
+    gp = row.get("gamesPlayed")
+    if gp is not None:
+        return gp
+    return 1 if ("gameId" in row or "gameDate" in row) else 0
+
+
+def row_date(row):
+    return str(row.get("gameDate") or "")[:10]
+
+
+def fetch_skater_rows(cayenne, aggregate=False, is_game=False):
+    return {rep: stats_report("skater", rep, cayenne, aggregate, is_game)
+            for rep in ("summary", "realtime", "faceoffwins")}
+
+
+def fold_skaters(rows, keep=None):
+    """{playerId: totals} from summary + realtime + faceoffwins rows. keep(row) filters rows."""
     out = {}
-    for row in stats_report("skater", "summary", cayenne, aggregate, is_game):
-        out[row["playerId"]] = {
-            "name": row.get("skaterFullName"),
-            "teams": row.get("teamAbbrevs"),
-            "pos": row.get("positionCode"),
-            "gp": row.get("gamesPlayed") or 0,
-            "g": row.get("goals") or 0,
-            "a": row.get("assists") or 0,
-            "pm": row.get("plusMinus") or 0,
-            "ppp": row.get("ppPoints") or 0,
-            "gwg": row.get("gameWinningGoals") or 0,
-            "sog": row.get("shots") or 0,
-            "toi": round((row.get("timeOnIcePerGame") or 0) / 60, 2),  # seconds -> minutes
-            "fw": 0, "hit": 0, "blk": 0,
-        }
-    for row in stats_report("skater", "realtime", cayenne, aggregate, is_game):
-        p = out.get(row["playerId"])
-        if p:
-            p["hit"] = row.get("hits") or 0
-            p["blk"] = row.get("blockedShots") or 0
-    for row in stats_report("skater", "faceoffwins", cayenne, aggregate, is_game):
-        p = out.get(row["playerId"])
-        if p:
-            p["fw"] = row.get("totalFaceoffWins") or 0
+    for row in rows["summary"]:
+        if keep and not keep(row):
+            continue
+        a = out.setdefault(row["playerId"], {"name": None, "teams": None, "pos": None, "gp": 0, "g": 0, "a": 0,
+                                             "pm": 0, "ppp": 0, "gwg": 0, "sog": 0, "fw": 0, "hit": 0, "blk": 0,
+                                             "_toi": 0.0})
+        gp = games_in(row)
+        a["name"] = row.get("skaterFullName") or a["name"]
+        a["teams"] = row.get("teamAbbrevs") or row.get("teamAbbrev") or a["teams"]
+        a["pos"] = row.get("positionCode") or a["pos"]
+        a["gp"] += gp
+        for k, f in (("g", "goals"), ("a", "assists"), ("pm", "plusMinus"), ("ppp", "ppPoints"),
+                     ("gwg", "gameWinningGoals"), ("sog", "shots")):
+            a[k] += row.get(f) or 0
+        a["_toi"] += (row.get("timeOnIcePerGame") or 0) * gp
+    for row in rows["realtime"]:
+        a = out.get(row["playerId"])
+        if a and (not keep or keep(row)):
+            a["hit"] += row.get("hits") or 0
+            a["blk"] += row.get("blockedShots") or 0
+    for row in rows["faceoffwins"]:
+        a = out.get(row["playerId"])
+        if a and (not keep or keep(row)):
+            a["fw"] += row.get("totalFaceoffWins") or 0
+    for a in out.values():
+        toi = a.pop("_toi")
+        a["toi"] = round(toi / a["gp"] / 60, 2) if a["gp"] else 0  # seconds -> minutes per game
     return out
+
+
+def fold_goalies(rows, keep=None):
+    out = {}
+    for row in rows:
+        if keep and not keep(row):
+            continue
+        a = out.setdefault(row["playerId"], {"name": None, "teams": None, "gp": 0, "gs": 0, "w": 0,
+                                             "sv": 0, "sa": 0, "so": 0})
+        a["name"] = row.get("goalieFullName") or a["name"]
+        a["teams"] = row.get("teamAbbrevs") or row.get("teamAbbrev") or a["teams"]
+        a["gp"] += games_in(row)
+        a["gs"] += row.get("gamesStarted") or 0
+        a["w"] += row.get("wins") or 0
+        a["sv"] += row.get("saves") or 0
+        a["sa"] += row.get("shotsAgainst") or 0
+        a["so"] += row.get("shutouts") or 0
+    return out
+
+
+def skater_block(cayenne, aggregate=False, is_game=False):
+    return fold_skaters(fetch_skater_rows(cayenne, aggregate, is_game))
 
 
 def goalie_block(cayenne, aggregate=False, is_game=False):
-    out = {}
-    for row in stats_report("goalie", "summary", cayenne, aggregate, is_game):
-        out[row["playerId"]] = {
-            "name": row.get("goalieFullName"),
-            "teams": row.get("teamAbbrevs"),
-            "gp": row.get("gamesPlayed") or 0,
-            "gs": row.get("gamesStarted") or 0,
-            "w": row.get("wins") or 0,
-            "sv": row.get("saves") or 0,
-            "sa": row.get("shotsAgainst") or 0,
-            "so": row.get("shutouts") or 0,
-        }
-    return out
+    return fold_goalies(stats_report("goalie", "summary", cayenne, aggregate, is_game))
 
 
+# ---------------------------------------------------------------------------
 def teams_block(cur, prev):
     """32 active teams with per-game rates for the current and previous season."""
     tri = {t["id"]: t for t in get(f"{STATS}/team").get("data", [])}
@@ -187,40 +232,184 @@ def schedule_block(start, days=21):
     return sorted(games.values(), key=lambda g: (g["d"], g["t"] or ""))
 
 
+# ---------------------------------------------------------------------------
+# League-wide windows (last 7, 14, 30 days)
+# ---------------------------------------------------------------------------
 WINDOWS = {"r7": 7, "rec": 14, "r30": 30}
 
 
 def window_blocks(today):
-    """Aggregate stats per player over the last N days, for every window in WINDOWS.
+    """Per-player totals over the last N days for every window in WINDOWS.
 
-    Tries the documented date-range form first (isAggregate + isGame), then without isGame.
-    A response is rejected if any player has more games than days in the window, which
-    means the date filter was ignored and the numbers are season or career totals.
+    Plan A: one pull of per-game rows for the longest window, then each window is summed
+            locally by game date. Needs rows that carry gameDate.
+    Plan B: one aggregated query per window (the API sums the dates). Used only if Plan A
+            gets rows without dates or fails. Rejected if any player shows more games than
+            days in the window, which means the date filter was ignored.
     """
-    out, meta = {}, {}
+    hi = today - dt.timedelta(days=1)
+    meta = {k: [(today - dt.timedelta(days=n)).isoformat(), hi.isoformat()] for k, n in WINDOWS.items()}
+    out = {k: ({}, {}) for k in WINDOWS}
+    lo_all = today - dt.timedelta(days=max(WINDOWS.values()))
+    cayenne = f'gameDate<="{hi} 23:59:59" and gameDate>="{lo_all}" and gameTypeId=2'
+
+    sk_rows, gl_rows = None, []
+    try:
+        sk_rows = fetch_skater_rows(cayenne, aggregate=False, is_game=True)
+        gl_rows = stats_report("goalie", "summary", cayenne, False, True)
+    except RuntimeError as e:
+        warn(f"per-game window pull failed, trying aggregated windows: {e}")
+        sk_rows = None
+    per_game = bool(sk_rows and sk_rows["summary"] and "gameDate" in sk_rows["summary"][0])
+    if sk_rows is not None:
+        print(f"Window pull (per-game form): {len(sk_rows['summary'])} skater rows, {len(gl_rows)} goalie rows, "
+              f"rows carry gameDate: {per_game}", flush=True)
+
+    if per_game:
+        for key, (lo_s, hi_s) in meta.items():
+            def keep(r, lo_s=lo_s, hi_s=hi_s):
+                return lo_s <= row_date(r) <= hi_s
+            out[key] = (fold_skaters(sk_rows, keep), fold_goalies(gl_rows, keep))
+    else:
+        for key, days in WINDOWS.items():
+            lo_s, hi_s = meta[key]
+            cay = f'gameDate<="{hi_s} 23:59:59" and gameDate>="{lo_s}" and gameTypeId=2'
+            for aggregate in (True, False):
+                try:
+                    sk, gl = skater_block(cay, aggregate, False), goalie_block(cay, aggregate, False)
+                except RuntimeError as e:
+                    warn(f"{days}-day window (isAggregate={aggregate}) failed: {e}")
+                    continue
+                most = max([v["gp"] for v in sk.values()] + [v["gp"] for v in gl.values()] + [0])
+                if most > days:
+                    warn(f"{days}-day window (isAggregate={aggregate}) ignored the date filter "
+                         f"(max {most} GP); discarded")
+                    continue
+                out[key] = (sk, gl)
+                break
+
     for key, days in WINDOWS.items():
-        lo, hi = today - dt.timedelta(days=days), today - dt.timedelta(days=1)
-        cayenne = f'gameDate<="{hi} 23:59:59" and gameDate>="{lo}" and gameTypeId=2'
-        result = None
-        for is_game in (True, False):
-            try:
-                sk = skater_block(cayenne, aggregate=True, is_game=is_game)
-                gl = goalie_block(cayenne, aggregate=True, is_game=is_game)
-            except RuntimeError as e:
-                warn(f"{days}-day window (isGame={is_game}) failed: {e}")
-                continue
-            most = max([v["gp"] for v in sk.values()] + [v["gp"] for v in gl.values()] + [0])
-            if most > days:
-                warn(f"{days}-day window (isGame={is_game}) ignored the date filter (max {most} GP); discarded")
-                continue
-            result = (sk, gl)
-            break
-        if result is None:
-            warn(f"{days}-day window unavailable today; the site hides it")
-            result = ({}, {})
-        out[key] = result
-        meta[key] = [lo.isoformat(), hi.isoformat()]
+        sk, gl = out[key]
+        most = max([v["gp"] for v in sk.values()] + [0])
+        print(f"Window {days:>2} days {meta[key][0]} to {meta[key][1]}: {len(sk)} skaters, {len(gl)} goalies, "
+              f"most games {most}", flush=True)
+        if not sk:
+            warn(f"{days}-day window has no skater data; the site greys it out")
     return out, meta
+
+
+# ---------------------------------------------------------------------------
+# Game-by-game history for the players in site/roster.json
+# ---------------------------------------------------------------------------
+def roster_ids():
+    try:
+        j = json.loads(ROSTER_FILE.read_text(encoding="utf-8"))
+        return [int(p["id"]) for p in j.get("players", [])]
+    except (OSError, ValueError, KeyError, TypeError) as e:
+        warn(f"could not read {ROSTER_FILE}: {e}. No game history will be stored")
+        return []
+
+
+def _game_key(row):
+    return row.get("gameId") or row_date(row)
+
+
+def skater_history_stats(pid, season):
+    """Per-game rows from the stats API (all 9 categories). None if the API gave no usable rows."""
+    cay = f"playerId={pid} and seasonId={season} and gameTypeId=2"
+    reps = {rep: stats_report("skater", rep, cay, False, True) for rep in ("summary", "realtime", "faceoffwins")}
+    if not reps["summary"] or not row_date(reps["summary"][0]):
+        return None
+    games = {}
+    for r in reps["summary"]:
+        g = games.setdefault(_game_key(r), {"d": row_date(r), "g": 0, "a": 0, "pm": 0, "ppp": 0, "gwg": 0,
+                                            "sog": 0, "fw": 0, "hit": 0, "blk": 0})
+        g["g"] += r.get("goals") or 0
+        g["a"] += r.get("assists") or 0
+        g["pm"] += r.get("plusMinus") or 0
+        g["ppp"] += r.get("ppPoints") or 0
+        g["gwg"] += r.get("gameWinningGoals") or 0
+        g["sog"] += r.get("shots") or 0
+    for r in reps["realtime"]:
+        g = games.get(_game_key(r))
+        if g:
+            g["hit"] += r.get("hits") or 0
+            g["blk"] += r.get("blockedShots") or 0
+    for r in reps["faceoffwins"]:
+        g = games.get(_game_key(r))
+        if g:
+            g["fw"] += r.get("totalFaceoffWins") or 0
+    return [[g["d"], 1, g["g"], g["a"], g["pm"], g["ppp"], g["gwg"], g["sog"], g["fw"], g["hit"], g["blk"]]
+            for g in sorted(games.values(), key=lambda g: g["d"])]
+
+
+def skater_history_gamelog(pid, season):
+    """Fallback: NHL web game log. Has no hits, blocks or faceoff wins, so those stay 0."""
+    data = get(f"{WEB}/player/{pid}/game-log/{season}/2")
+    return [[str(g["gameDate"])[:10], 1, g.get("goals") or 0, g.get("assists") or 0, g.get("plusMinus") or 0,
+             g.get("powerPlayPoints") or 0, g.get("gameWinningGoals") or 0, g.get("shots") or 0, 0, 0, 0]
+            for g in sorted(data.get("gameLog", []), key=lambda g: g["gameDate"])]
+
+
+def goalie_history_stats(pid, season):
+    cay = f"playerId={pid} and seasonId={season} and gameTypeId=2"
+    rows = stats_report("goalie", "summary", cay, False, True)
+    if not rows or not row_date(rows[0]):
+        return None
+    games = {}
+    for r in rows:
+        g = games.setdefault(_game_key(r), [row_date(r), 1, 0, 0, 0, 0, 0])
+        g[2] += r.get("gamesStarted") or 0
+        g[3] += r.get("wins") or 0
+        g[4] += r.get("saves") or 0
+        g[5] += r.get("shotsAgainst") or 0
+        g[6] += r.get("shutouts") or 0
+    return sorted(games.values(), key=lambda g: g[0])
+
+
+def goalie_history_gamelog(pid, season):
+    data = get(f"{WEB}/player/{pid}/game-log/{season}/2")
+    rows = []
+    for g in sorted(data.get("gameLog", []), key=lambda g: g["gameDate"]):
+        sa, ga = g.get("shotsAgainst") or 0, g.get("goalsAgainst") or 0
+        rows.append([str(g["gameDate"])[:10], 1, g.get("gamesStarted") or 0, 1 if g.get("decision") == "W" else 0,
+                     max(0, sa - ga), sa, g.get("shutouts") or 0])
+    return rows
+
+
+def history_block(pids, season, today, rosters, sk_cur, gl_cur, gl_prev):
+    players = {}
+    for pid in pids:
+        info = rosters.get(pid)
+        is_goalie = (info and info["pos"] == "G") or (not info and (pid in gl_cur or pid in gl_prev))
+        if not info and pid not in sk_cur and not is_goalie:
+            warn(f"history: player {pid} is not on an NHL roster and has no stats; skipped")
+            continue
+        played = ((gl_cur if is_goalie else sk_cur).get(pid) or {}).get("gp", 0)
+        primary = goalie_history_stats if is_goalie else skater_history_stats
+        fallback = goalie_history_gamelog if is_goalie else skater_history_gamelog
+        rows, partial = None, False
+        try:
+            rows = primary(pid, season)
+        except RuntimeError as e:
+            warn(f"history {pid}: stats API failed ({e})")
+        if rows is None or (not rows and played):
+            try:
+                rows = fallback(pid, season)
+                partial = bool(rows) and not is_goalie
+                if partial:
+                    warn(f"history {pid}: used web game log, so hits, blocks and faceoff wins are missing")
+            except RuntimeError as e:
+                warn(f"history {pid}: game log failed too ({e})")
+                rows = []
+        entry = {"k": "G" if is_goalie else "S", "rows": rows or []}
+        if partial:
+            entry["partial"] = True
+        players[str(pid)] = entry
+    games = sum(len(p["rows"]) for p in players.values())
+    print(f"History: {len(players)} of {len(pids)} roster players, {games} player-games", flush=True)
+    return {"asOf": (today - dt.timedelta(days=1)).isoformat(),
+            "skaterFields": HIST_SKATER_FIELDS, "goalieFields": HIST_GOALIE_FIELDS, "players": players}
 
 
 def pack(stats, fields):
@@ -246,14 +435,16 @@ def build(now_utc):
     print(f"Skaters: {len(sk_cur)} this season, {len(sk_prev)} last. Goalies: {len(gl_cur)} / {len(gl_prev)}. "
           f"Active clubs: {len(teams)}", flush=True)
 
-    # Last 7 / 14 / 30 days, league-wide. Optional: a window that fails is left empty and the
-    # site hides it. "rec" (14 days) also feeds the projection model's recent-form weight.
+    # Last 7 / 14 / 30 days, league-wide. A window that fails is left empty and the site greys it
+    # out. "rec" (14 days) also feeds the projection model's recent-form weight.
     win, win_meta = window_blocks(today)
     (sk_r7, gl_r7), (sk_rec, gl_rec), (sk_r30, gl_r30) = win["r7"], win["rec"], win["r30"]
     lo, hi = win_meta["rec"]
 
     monday = today - dt.timedelta(days=today.weekday())
     schedule = schedule_block(min(monday, today - dt.timedelta(days=1)), days=21)
+
+    history = history_block(roster_ids(), cur, today, rosters, sk_cur, gl_cur, gl_prev)
 
     def team_of(pid, *blocks):
         if pid in rosters:
@@ -304,6 +495,7 @@ def build(now_utc):
         "games": schedule,
         "skaters": skaters,
         "goalies": goalies,
+        "history": history,
         "warnings": WARNINGS,
     }
 

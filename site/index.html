@@ -169,6 +169,24 @@ table.heat td.small { font-style: italic; font-weight: 400; opacity: .7; }
 .h4 { background: var(--h4); } .h5 { background: var(--h5); color: var(--h5t); }
 table.heat tr.sel td:first-child { box-shadow: inset 4px 0 0 var(--blue); }
 table.heat tfoot td { border-top: 2px solid var(--line); }
+.ctrl-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+.ctrl-row select, .ctrl-row input[type="date"] { padding: 5px 8px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--ink); }
+.ctrl-row label { display: inline-flex; gap: 6px; align-items: center; }
+.lglabel { min-width: 64px; align-self: center; }
+.lg i.hollow { background: transparent !important; border: 2px solid var(--muted); }
+.lg-dot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.mini-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; margin-top: 8px; }
+.mini { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px 4px; background: var(--surface); min-width: 0; }
+.mini-h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.mini-h b { font-family: var(--display); font-size: 17px; font-weight: 600; }
+.mini svg { width: 100%; height: auto; display: block; }
+.mini text { fill: var(--muted); font-family: var(--body); font-size: 10.5px; }
+.mini .ln { fill: none; stroke: var(--blue); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.mini .gl { stroke: var(--line); stroke-width: 1; }
+.mini .zl { stroke: var(--muted); stroke-dasharray: 3 3; }
+.mini circle { fill: var(--blue); stroke: var(--surface); stroke-width: 1; }
+.mini circle.dim { fill: transparent; stroke: none; }
+.mini .hint { margin: 10px 0 6px; }
 [hidden] { display: none !important; }
 </style>
 </head>
@@ -226,15 +244,42 @@ table.heat tfoot td { border-top: 2px solid var(--line); }
     <div class="panel">
       <div class="panel-head">
         <h2>Recent form</h2>
-        <select id="formScope" aria-label="Show form for"></select>
+        <div class="seg" id="formMode" role="group" aria-label="What to compare">
+          <button data-fmode="windows" aria-pressed="true">By time window</button>
+          <button data-fmode="entities" aria-pressed="false">Forwards, defensemen and players</button>
+        </div>
       </div>
-      <p class="hint">Average league percentile per game of the selected players in each time window. 50 is a typical NHL regular; 80 means better than 80% of the league. Click a window to hide or show it.</p>
-      <div class="legend" id="formLegend"></div>
+      <p class="hint" id="formHint"></p>
+      <div id="formControls"></div>
       <div id="formSkChart" class="chart"></div>
       <div id="formGChart" class="chart"></div>
-      <h3 style="margin-top:16px">Totals by window</h3>
+      <h3 id="formTotalsHead" style="margin-top:16px">Totals</h3>
       <p class="hint">Raw totals of the selected players, whether or not they were in your active lineup.</p>
-      <div class="table-wrap" style="margin-top:6px"><table id="formTotals"></table></div>
+      <div class="table-wrap" id="formTotals" style="margin-top:6px"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Performance history</h2>
+        <label class="meta">Show <select id="histScope" aria-label="Players to show"></select></label>
+      </div>
+      <p class="hint">How your rostered players have produced over time, game by game, grouped by day, week or month. It counts every game they played, whether or not they were in your active lineup.</p>
+      <div class="ctrl-row">
+        <span class="meta lglabel">Group by</span>
+        <div class="seg" id="histGran" role="group" aria-label="Group by"><button data-gran="day">Day</button><button data-gran="week">Week</button><button data-gran="month">Month</button></div>
+        <div class="seg" id="histMode" role="group" aria-label="Value shown"><button data-hm="period">Per period</button><button data-hm="cum">Running total</button></div>
+      </div>
+      <div class="ctrl-row">
+        <span class="meta lglabel">Time frame</span>
+        <div class="seg" id="histPreset" role="group" aria-label="Time frame"><button data-hp="7">7 days</button><button data-hp="14">14 days</button><button data-hp="30">30 days</button><button data-hp="all">Season</button></div>
+        <label class="meta">From <input type="date" id="histFrom"></label>
+        <label class="meta">To <input type="date" id="histTo"></label>
+      </div>
+      <div id="histMsg"></div>
+      <div id="histNote"></div>
+      <h3 id="histSkH" style="margin-top:14px"></h3>
+      <div class="mini-grid" id="histSk"></div>
+      <h3 id="histGH" style="margin-top:14px"></h3>
+      <div class="mini-grid" id="histG"></div>
     </div>
     <div class="panel">
       <div class="panel-head">
@@ -605,7 +650,7 @@ function renderWeek() {
 }
 
 function renderCats() {
-  renderForm(); renderHeat();
+  renderForm(); renderHist(); renderHeat();
   const sk = rosterPlayers().filter(x => x.p.kind === 'S' && x.r.status !== 'IR').map(x => x.p).sort((a, b) => value(b, null) - value(a, null)).slice(0, 10);
   const gl = rosterPlayers().filter(x => x.p.kind === 'G' && x.r.status !== 'IR').map(x => x.p).sort((a, b) => value(b, null) - value(a, null)).slice(0, 2);
   // An average team's best 10 skaters are roughly the league's top 100 by value; its 2 goalies the top 20.
@@ -725,14 +770,19 @@ function render() {
   if (ui.tab === 'roster') renderRoster();
 }
 
-// ---------------------------------------------------------------- recent form & percentiles
+// ---------------------------------------------------------------- recent form, percentiles & history
 const WINDOWS = [['r7', '7 days'], ['rec', '14 days'], ['r30', '30 days'], ['cur', 'Season'], ['prev', 'Last season']];
 const WCOLOR = { r7: 'var(--w7)', rec: 'var(--w14)', r30: 'var(--w30)', cur: 'var(--wcur)', prev: 'var(--wprev)' };
-const MIN_GP = { S: { r7: 2, rec: 3, r30: 6, prev: 20 }, G: { r7: 1, rec: 2, r30: 3, prev: 10 } };
-const fm = { scope: 'team', hidden: new Set(['prev']), heatWin: 'rec', cmp: 'all' };
-const PCT_CACHE = new Map();
-const AVAIL = {};
+const NOMINAL_GP = { S: { r7: 2, rec: 3, r30: 6, prev: 20 }, G: { r7: 1, rec: 2, r30: 3, prev: 10 } };
+const PALETTE = ['#2F6DB5', '#E07B00', '#2E8B57', '#8E5BB5', '#C62828', '#1B9AAA', '#8C6D31', '#D1578B'];
+const GROUP_LABEL = { F: 'Forwards', D: 'Defensemen', G: 'Goalies' };
+const MAX_SEL = 8;
+const fm = { mode: 'windows', scope: 'team', hidden: new Set(['prev']), win: 'rec', sel: ['F', 'D', 'G'],
+  colors: new Map(), note: '', heatWin: 'rec', heatInit: false, cmp: 'all' };
+const hs = { scope: 'team', gran: 'week', preset: 'all', from: null, to: null, mode: 'period' };
+const PCT_CACHE = new Map(), AVAIL = {}, LEAD = {};
 
+// ---- helpers: windows, thresholds, percentiles
 function winLabel(w) {
   const r = D.windows && D.windows[w];
   return r ? `${dayMonth(r[0])} to ${dayMonth(r[1])}` : w === 'cur' ? D.season.slice(0, 4) + '-' + D.season.slice(6) + ' to date' : w === 'prev' ? D.prevSeason.slice(0, 4) + '-' + D.prevSeason.slice(6) : '';
@@ -746,11 +796,20 @@ function rateOf(p, w, k) {
   if (k === 'svp') return o.sa ? o.sv / o.sa : null;
   return o[k] / o.gp;
 }
+// Most games any player has in this window. Early in the season this is small, and the minimum
+// below scales with it so a young window still shows percentiles.
+function leaderGp(kind, w) {
+  const key = kind + '|' + w;
+  if (!(key in LEAD)) LEAD[key] = Math.max(0, ...[...P.values()].filter(p => p.kind === kind && p[w]).map(p => p[w].gp));
+  return LEAD[key];
+}
+function nominalGp(kind, w) {
+  const n = NOMINAL_GP[kind][w];
+  return n != null ? n : Math.max(kind === 'G' ? 2 : 3, Math.round(leaderGp(kind, w) * 0.25)); // season to date
+}
 function minGp(kind, w) {
-  const m = MIN_GP[kind][w]; if (m != null) return m;
-  // season to date: a quarter of the most games anyone has played
-  const most = Math.max(0, ...[...P.values()].filter(p => p.kind === kind && p.cur).map(p => p.cur.gp));
-  return Math.max(kind === 'G' ? 2 : 3, Math.round(most * 0.25));
+  const lead = leaderGp(kind, w);
+  return lead ? clamp(Math.ceil(lead * 0.5), 1, nominalGp(kind, w)) : 1;
 }
 function poolValues(kind, w, k, grp) {
   const key = [kind, w, k, grp || ''].join('|');
@@ -776,17 +835,49 @@ function groupPct(players, w, k, samePos) {
   for (const p of players) { const v = pct(p, w, k, samePos); if (v == null) continue; const g = p[w].gp; s += v * g; n += g; }
   return n ? s / n : null;
 }
-function scopePlayers() {
-  const rp = rosterPlayers().map(x => x.p);
-  if (fm.scope === 'team') return rp;
-  if (['F', 'D', 'G'].includes(fm.scope)) return rp.filter(p => p.group === fm.scope);
-  return rp.filter(p => String(p.id) === fm.scope);
+function sumPlayers(list, w, k) {
+  if (k === 'svp') { const sv = list.reduce((s, p) => s + (p[w]?.sv || 0), 0), sa = list.reduce((s, p) => s + (p[w]?.sa || 0), 0); return sa ? sv / sa : null; }
+  return list.reduce((s, p) => s + (p[w]?.[k] || 0), 0);
+}
+function fmtTotal(k, v) {
+  if (v == null) return '–';
+  if (k === 'svp') return v.toFixed(3).replace(/^0/, '');
+  return (k === 'pm' && v > 0 ? '+' : '') + Math.round(v);
 }
 
+// ---- helpers: who is selected
+function sortedRoster() {
+  return rosterPlayers().map(x => x.p).sort((a, b) => 'FDG'.indexOf(a.group) - 'FDG'.indexOf(b.group) || a.name.localeCompare(b.name));
+}
+function playersFor(scope) {
+  const rp = rosterPlayers().map(x => x.p);
+  if (scope === 'team') return rp;
+  if (['F', 'D', 'G'].includes(scope)) return rp.filter(p => p.group === scope);
+  return rp.filter(p => String(p.id) === scope);
+}
+function scopeOptions(current) {
+  const rp = sortedRoster();
+  return `<option value="team" ${current === 'team' ? 'selected' : ''}>Whole roster</option>` +
+    ['F', 'D', 'G'].map(g => `<option value="${g}" ${current === g ? 'selected' : ''}>${GROUP_LABEL[g]}</option>`).join('') +
+    `<optgroup label="Players">${rp.map(p => `<option value="${p.id}" ${current === String(p.id) ? 'selected' : ''}>${esc(p.name)} (${p.group})</option>`).join('')}</optgroup>`;
+}
+function entityPlayers(e) { return playersFor(e); }
+function entityKind(e) { return e === 'G' ? 'G' : e === 'F' || e === 'D' ? 'S' : (P.get(Number(e)) || {}).kind; }
+function entityLabel(e) { return GROUP_LABEL[e] || (P.get(Number(e)) || {}).name || e; }
+function entityColor(e) { return fm.colors.get(e) || 'var(--muted)'; }
+function assignColors() {
+  for (const k of [...fm.colors.keys()]) if (!fm.sel.includes(k)) fm.colors.delete(k);
+  for (const e of fm.sel) if (!fm.colors.has(e)) {
+    const used = new Set(fm.colors.values());
+    fm.colors.set(e, PALETTE.find(c => !used.has(c)) || PALETTE[0]);
+  }
+}
+
+// ---- bar chart (percentiles)
 function svgBars(cats, series) {
-  const gw = cats.length > 5 ? 96 : 84, left = 40, top = 12, ph = 180, W = left + cats.length * gw + 10, H = top + ph + 34;
-  const y = v => top + ph - v / 100 * ph;
   const vis = series.filter(s => !s.hidden);
+  const gw = Math.max(cats.length > 5 ? 96 : 84, vis.length * 13 + 22), left = 40, top = 12, ph = 180, W = left + cats.length * gw + 10, H = top + ph + 34;
+  const y = v => top + ph - v / 100 * ph;
   const bw = vis.length ? Math.min(14, (gw - 16) / vis.length) : 0;
   let g = '';
   for (const v of [0, 25, 50, 75, 100]) g += `<line class="${v === 50 ? 'mid' : 'grid'}" x1="${left}" x2="${W - 10}" y1="${y(v)}" y2="${y(v)}"/><text x="${left - 6}" y="${y(v) + 4}" text-anchor="end">${v}</text>`;
@@ -799,73 +890,222 @@ function svgBars(cats, series) {
     });
     g += `<text class="cat-l" x="${left + ci * gw + gw / 2}" y="${top + ph + 20}" text-anchor="middle">${esc(lab)}</text>`;
   });
-  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Percentile by category and time window">${g}</svg>`;
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Percentile by category">${g}</svg>`;
 }
 
+// ---- Recent form panel
 function renderForm() {
-  const sel = $('formScope');
-  if (!sel.options.length || sel.dataset.n !== String(roster.length)) {
-    const rp = rosterPlayers().map(x => x.p).sort((a, b) => 'FDG'.indexOf(a.group) - 'FDG'.indexOf(b.group) || a.name.localeCompare(b.name));
-    sel.innerHTML = `<option value="team">Whole roster</option><option value="F">Forwards</option><option value="D">Defensemen</option><option value="G">Goalies</option>` +
-      `<optgroup label="Players">${rp.map(p => `<option value="${p.id}">${esc(p.name)} (${p.group})</option>`).join('')}</optgroup>`;
-    sel.dataset.n = String(roster.length);
+  document.querySelectorAll('#formMode button').forEach(b => b.setAttribute('aria-pressed', b.dataset.fmode === fm.mode));
+  assignColors();
+  if (fm.mode === 'windows' && ![...['team', 'F', 'D', 'G'], ...rosterPlayers().map(x => String(x.p.id))].includes(fm.scope)) fm.scope = 'team';
+  if (!winAvail(fm.win)) fm.win = WINDOWS.map(x => x[0]).find(winAvail) || 'cur';
+  fm.sel = fm.sel.filter(e => ['F', 'D', 'G'].includes(e) || rosterPlayers().some(x => String(x.p.id) === e));
+  assignColors();
+
+  let ctl;
+  if (fm.mode === 'windows') {
+    ctl = `<div class="ctrl-row"><label class="meta">Show <select id="formScope" aria-label="Players to show">${scopeOptions(fm.scope)}</select></label></div>
+      <div class="legend">${WINDOWS.map(([w, lab]) => {
+        const ok = winAvail(w);
+        return `<button class="lg" data-wtoggle="${w}" aria-pressed="${ok && !fm.hidden.has(w)}" ${ok ? '' : 'disabled title="No data for this window in today\'s build"'}><i style="background:${WCOLOR[w]}"></i>${lab}<span class="meta">${ok ? winLabel(w) : 'no data'}</span></button>`;
+      }).join('')}</div>`;
+  } else {
+    const chip = e => { const on = fm.sel.includes(e);
+      return `<button class="lg" data-ent="${e}" aria-pressed="${on}"><i class="${on ? '' : 'hollow'}" style="background:${on ? entityColor(e) : 'transparent'}"></i>${esc(entityLabel(e))}</button>`; };
+    ctl = `<div class="ctrl-row"><span class="meta lglabel">Window</span><div class="seg" role="group" aria-label="Time window">${WINDOWS.map(([w, lab]) =>
+        `<button data-fwin="${w}" aria-pressed="${fm.win === w}" ${winAvail(w) ? '' : 'disabled'}>${lab}</button>`).join('')}</div>
+        <span class="meta">${winLabel(fm.win)}</span></div>
+      <div class="legend"><span class="meta lglabel">Groups</span>${['F', 'D', 'G'].map(chip).join('')}</div>
+      <div class="legend"><span class="meta lglabel">Players</span>${sortedRoster().map(p => chip(String(p.id))).join('')}</div>
+      <div class="ctrl-row"><button class="btn small" data-fclear>Clear all</button><span class="meta" id="selNote">${esc(fm.note || `${fm.sel.length} of ${MAX_SEL} selected`)}</span></div>`;
   }
-  if (![...sel.options].some(o => o.value === fm.scope)) fm.scope = 'team';
-  sel.value = fm.scope;
+  $('formControls').innerHTML = ctl;
+  $('formHint').textContent = fm.mode === 'windows'
+    ? 'Average league percentile per game of the selected players in each time window. 50 is a typical NHL regular; 80 means better than 80% of the league. Click a window to hide or show it.'
+    : 'Compare forwards, defensemen and individual players side by side for one time window. Bars are average league percentile per game; 50 is a typical NHL regular. Click a name or group to add or remove it.';
 
-  $('formLegend').innerHTML = WINDOWS.map(([w, lab]) => {
-    const ok = winAvail(w);
-    return `<button class="lg" data-wtoggle="${w}" aria-pressed="${ok && !fm.hidden.has(w)}" ${ok ? '' : 'disabled title="No data for this window in today\'s build"'}><i style="background:${WCOLOR[w]}"></i>${lab}<span class="meta">${ok ? winLabel(w) : 'no data'}</span></button>`;
-  }).join('');
-
-  const players = scopePlayers(), sk = players.filter(p => p.kind === 'S'), gl = players.filter(p => p.kind === 'G');
-  const series = (list, cats) => WINDOWS.map(([w, lab]) => ({ label: lab, color: WCOLOR[w], hidden: fm.hidden.has(w) || !winAvail(w),
-    values: cats.map(([, k]) => groupPct(list, w, k, false)) }));
-  $('formSkChart').innerHTML = sk.length ? `<h3>Skater categories</h3>${svgBars(SK, series(sk, SK))}` : '';
   const gcats = GC.map(([lab, k]) => [lab, k]);
-  $('formGChart').innerHTML = gl.length ? `<h3>Goalie categories</h3>${svgBars(gcats, series(gl, gcats))}` : '';
-  if (!players.length) $('formSkChart').innerHTML = '<p class="hint">No players in this selection.</p>';
-
-  // raw totals per window
-  const cols = (sk.length ? [['GP', 'gp', 'S']].concat(SK.map(c => [c[0], c[1], 'S'])) : []).concat(gl.length ? [['GS', 'gs', 'G'], ['W', 'w', 'G'], ['SV', 'sv', 'G'], ['SV%', 'svp', 'G'], ['SHO', 'so', 'G']] : []);
-  let h = `<thead><tr><th>Window</th>${cols.map(c => `<th class="r">${c[0]}</th>`).join('')}</tr></thead><tbody>`;
-  for (const [w, lab] of WINDOWS) {
-    if (!winAvail(w)) continue;
-    h += `<tr><td>${lab} <span class="meta">${winLabel(w)}</span></td>` + cols.map(([, k, kind]) => {
-      const list = kind === 'S' ? sk : gl;
-      if (k === 'svp') { const sv = list.reduce((s, p) => s + (p[w]?.sv || 0), 0), sa = list.reduce((s, p) => s + (p[w]?.sa || 0), 0);
-        return `<td class="r num">${sa ? (sv / sa).toFixed(3).replace(/^0/, '') : '–'}</td>`; }
-      const v = list.reduce((s, p) => s + (p[w]?.[k] || 0), 0);
-      return `<td class="r num">${k === 'pm' && v > 0 ? '+' : ''}${Math.round(v)}</td>`;
-    }).join('') + '</tr>';
+  if (fm.mode === 'windows') {
+    const players = playersFor(fm.scope), sk = players.filter(p => p.kind === 'S'), gl = players.filter(p => p.kind === 'G');
+    const series = (list, cats) => WINDOWS.map(([w, lab]) => ({ label: lab, color: WCOLOR[w], hidden: fm.hidden.has(w) || !winAvail(w),
+      values: cats.map(([, k]) => groupPct(list, w, k, false)) }));
+    $('formSkChart').innerHTML = sk.length ? `<h3>Skater categories</h3>${svgBars(SK, series(sk, SK))}` : '';
+    $('formGChart').innerHTML = gl.length ? `<h3>Goalie categories</h3>${svgBars(gcats, series(gl, gcats))}` : '';
+    if (!players.length) $('formSkChart').innerHTML = '<p class="hint">No players in this selection.</p>';
+    // totals: one row per window
+    const cols = (sk.length ? [['GP', 'gp', 'S']].concat(SK.map(c => [c[0], c[1], 'S'])) : []).concat(gl.length ? [['GS', 'gs', 'G'], ['W', 'w', 'G'], ['SV', 'sv', 'G'], ['SV%', 'svp', 'G'], ['SHO', 'so', 'G']] : []);
+    let h = `<thead><tr><th>Window</th>${cols.map(c => `<th class="r">${c[0]}</th>`).join('')}</tr></thead><tbody>`;
+    for (const [w, lab] of WINDOWS) {
+      if (!winAvail(w)) continue;
+      h += `<tr><td>${lab} <span class="meta">${winLabel(w)}</span></td>` + cols.map(([, k, kind]) => `<td class="r num">${fmtTotal(k, sumPlayers(kind === 'S' ? sk : gl, w, k))}</td>`).join('') + '</tr>';
+    }
+    $('formTotals').innerHTML = '<table>' + h + '</tbody></table>';
+    $('formTotalsHead').textContent = 'Totals by window';
+  } else {
+    const w = fm.win, ok = winAvail(w);
+    const ents = k => fm.sel.filter(e => entityKind(e) === k);
+    const series = (list, cats) => list.map(e => ({ label: entityLabel(e), color: entityColor(e), values: cats.map(([, key]) => groupPct(entityPlayers(e), w, key, false)) }));
+    const skE = ents('S'), glE = ents('G');
+    $('formSkChart').innerHTML = !ok ? '<p class="hint">No data for this window.</p>' : skE.length ? `<h3>Skater categories, ${WINDOWS.find(x => x[0] === w)[1].toLowerCase()}</h3>${svgBars(SK, series(skE, SK))}` : '';
+    $('formGChart').innerHTML = ok && glE.length ? `<h3>Goalie categories, ${WINDOWS.find(x => x[0] === w)[1].toLowerCase()}</h3>${svgBars(gcats, series(glE, gcats))}` : '';
+    if (!fm.sel.length) $('formSkChart').innerHTML = '<p class="hint">Select at least one group or player above.</p>';
+    const table = (list, cols, title) => {
+      if (!list.length) return '';
+      return `<table style="margin-bottom:10px"><thead><tr><th>${title}</th>${cols.map(c => `<th class="r">${c[0]}</th>`).join('')}</tr></thead><tbody>` +
+        list.map(e => `<tr><td><span class="lg-dot" style="background:${entityColor(e)}"></span>${esc(entityLabel(e))}</td>${cols.map(([, k]) => `<td class="r num">${fmtTotal(k, sumPlayers(entityPlayers(e), w, k))}</td>`).join('')}</tr>`).join('') + '</tbody></table>';
+    };
+    $('formTotals').innerHTML = ok ? table(skE, [['GP', 'gp']].concat(SK), 'Skaters') + table(glE, [['GS', 'gs'], ['W', 'w'], ['SV', 'sv'], ['SV%', 'svp'], ['SHO', 'so']], 'Goalies') : '';
+    $('formTotalsHead').textContent = 'Totals, ' + WINDOWS.find(x => x[0] === w)[1].toLowerCase();
   }
-  $('formTotals').innerHTML = h + '</tbody>';
 }
 
+// ---- League percentile table
 function heatCls(v) { return v == null ? '' : v < 20 ? 'h1' : v < 40 ? 'h2' : v < 60 ? 'h3' : v < 80 ? 'h4' : 'h5'; }
 function renderHeat() {
-  if (!winAvail(fm.heatWin)) fm.heatWin = WINDOWS.map(x => x[0]).find(winAvail) || 'cur';
+  if (!fm.heatInit) {
+    fm.heatInit = true;
+    const ok = w => winAvail(w) && poolValues('S', w, 'g', null).length >= 10;
+    fm.heatWin = ['rec', 'r30', 'r7', 'cur', 'prev'].find(ok) || ['rec', 'r30', 'r7', 'cur', 'prev'].find(winAvail) || 'cur';
+  }
   $('heatWin').innerHTML = WINDOWS.map(([w, lab]) => `<button data-heatwin="${w}" aria-pressed="${fm.heatWin === w}" ${winAvail(w) ? '' : 'disabled'}>${lab}</button>`).join('');
   $('heatCmp').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.cmp === fm.cmp));
-  const w = fm.heatWin, same = fm.cmp === 'pos';
-  const rp = rosterPlayers().map(x => x.p).sort((a, b) => 'FDG'.indexOf(a.group) - 'FDG'.indexOf(b.group) || a.name.localeCompare(b.name));
+  const w = fm.heatWin, same = fm.cmp === 'pos', rp = sortedRoster();
   const table = (list, cats, kind, title) => {
     if (!list.length) return '';
-    const mg = minGp(kind, w);
+    const nom = nominalGp(kind, w);
     let h = `<thead><tr><th>${title}</th><th class="r">GP</th>${cats.map(c => `<th class="c">${c[0]}</th>`).join('')}</tr></thead><tbody>`;
     for (const p of list) {
-      const gp = p[w]?.gp || 0, small = gp > 0 && gp < mg;
+      const gp = p[w]?.gp || 0, small = gp > 0 && gp < nom;
       h += `<tr class="${fm.scope === String(p.id) ? 'sel' : ''}"><td><button class="pname" data-scope="${p.id}">${esc(p.name)}</button> <span class="meta">${p.group}</span></td><td class="r num">${gp || '–'}</td>` +
         cats.map(([lab, k]) => { const v = pct(p, w, k, same);
-          return `<td class="p ${heatCls(v)} ${small ? 'small' : ''}" title="${esc(p.name)}, ${lab}: ${v == null ? 'no games' : Math.round(v) + 'th percentile' + (small ? ' (small sample)' : '')}">${v == null ? '–' : Math.round(v)}</td>`; }).join('') + '</tr>';
+          return `<td class="p ${heatCls(v)} ${small ? 'small' : ''}" title="${esc(p.name)}, ${lab}: ${v == null ? (gp ? 'not enough league data yet' : 'no games') : Math.round(v) + 'th percentile' + (small ? ' (small sample)' : '')}">${v == null ? '–' : Math.round(v)}</td>`; }).join('') + '</tr>';
     }
     h += `</tbody><tfoot><tr><td>Roster average</td><td></td>${cats.map(([, k]) => { const v = groupPct(list, w, k, same); return `<td class="p ${heatCls(v)}">${v == null ? '–' : Math.round(v)}</td>`; }).join('')}</tr></tfoot>`;
     return h;
   };
   $('heatSk').innerHTML = table(rp.filter(p => p.kind === 'S'), SK, 'S', 'Skater');
   $('heatG').innerHTML = table(rp.filter(p => p.kind === 'G'), GC, 'G', 'Goalie');
-  const pool = poolValues('S', w, 'g', null).length;
-  $('heatSk').insertAdjacentHTML('afterbegin', `<caption style="caption-side:bottom;text-align:left;padding-top:6px" class="meta">Compared with ${pool} skaters with ${minGp('S', w)}+ games in this window${same ? ', same position only' : ''}.${pool < 10 ? ' Not enough games yet for percentiles.' : ''}</caption>`);
+  const pool = poolValues('S', w, 'g', null).length, mg = minGp('S', w), nom = nominalGp('S', w);
+  $('heatSk').insertAdjacentHTML('afterbegin', `<caption style="caption-side:bottom;text-align:left;padding-top:6px" class="meta">Compared with ${pool} skaters with ${mg}+ games in this window${same ? ', same position only' : ''}.${mg < nom ? ` Usually ${nom}+ games are required; the minimum is lower while the window fills up, so read early percentiles loosely.` : ''}${pool < 10 ? ' Not enough games yet for percentiles in this window.' : ''}</caption>`);
+}
+
+// ---- Performance history (line charts)
+const dayShort = iso => dayMonth(iso);
+const monthShort = key => new Date(key + '-01T12:00:00Z').toLocaleDateString('en-GB', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+function bucketKey(iso, gran) { return gran === 'day' ? iso : gran === 'week' ? mondayOf(iso) : iso.slice(0, 7); }
+function bucketLong(key, gran) { return gran === 'day' ? dayShort(key) : gran === 'week' ? 'Week of ' + dayShort(key) : monthShort(key); }
+function bucketShort(key, gran) { return gran === 'month' ? new Date(key + '-01T12:00:00Z').toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' }) : dayShort(key); }
+function histRows(p) { const h = D.history && D.history.players[String(p.id)]; return h ? h.rows : null; }
+function histBounds() {
+  let min = null;
+  for (const { p } of rosterPlayers()) { const r = histRows(p); if (r && r.length && (!min || r[0][0] < min)) min = r[0][0]; }
+  return min ? { min, max: D.history.asOf > min ? D.history.asOf : min } : null;
+}
+function histRange() {
+  const b = histBounds(); if (!b) return null;
+  let from, to;
+  if (hs.preset === 'custom') { from = hs.from || b.min; to = hs.to || b.max; }
+  else { to = b.max; from = hs.preset === 'all' ? b.min : addDays(b.max, -(Number(hs.preset) - 1)); }
+  if (from < b.min) from = b.min;
+  if (to > b.max) to = b.max;
+  if (from > to) [from, to] = [to, from];
+  return { from, to, min: b.min, max: b.max };
+}
+function histVectors(players, kind, range, gran) {
+  const fields = kind === 'S' ? D.history.skaterFields : D.history.goalieFields;
+  const keys = [], idx = new Map();
+  for (let d = range.from; d <= range.to; d = addDays(d, 1)) { const k = bucketKey(d, gran); if (!idx.has(k)) { idx.set(k, keys.length); keys.push(k); } }
+  const vec = keys.map(() => new Array(fields.length).fill(0));
+  for (const p of players) {
+    const rows = histRows(p); if (!rows) continue;
+    for (const r of rows) {
+      if (r[0] < range.from || r[0] > range.to) continue;
+      const v = vec[idx.get(bucketKey(r[0], gran))];
+      for (let i = 0; i < fields.length; i++) v[i] += r[i + 1] || 0;
+    }
+  }
+  return { keys, fields, vec };
+}
+function histSeries(hv, key, cumulative) {
+  const f = hv.fields, at = k => f.indexOf(k);
+  if (key === 'svp') {
+    let sv = 0, sa = 0;
+    return hv.vec.map(v => { const a = v[at('sv')], b = v[at('sa')];
+      if (cumulative) { sv += a; sa += b; return sa ? sv / sa : null; }
+      return b ? a / b : null; });
+  }
+  let run = 0;
+  return hv.vec.map(v => { const x = v[at(key)]; if (cumulative) { run += x; return run; } return x; });
+}
+// Whole-number axis with two equal steps, so the three gridlines (bottom, middle, top) are round numbers.
+const AXIS_STEPS = (() => { const s = new Set(); for (const mag of [1, 10, 100, 1000, 10000]) for (const m of [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8]) if (Number.isInteger(m * mag)) s.add(m * mag); return [...s].sort((a, b) => a - b); })();
+function niceAxis(min, max) {
+  min = Math.min(min, 0); max = Math.max(max, 2);
+  for (const step of AXIS_STEPS) { const lo = Math.floor(min / step) * step; if (lo + 2 * step >= max) return [lo, lo + 2 * step]; }
+  return [min, max];
+}
+function niceTick(v, isRatio) { return isRatio ? v.toFixed(3).replace(/^0/, '') : (Math.abs(v) < 10 && v % 1 ? v.toFixed(1) : String(Math.round(v))); }
+function svgLine(lab, keys, vals, gran, isRatio, summary) {
+  const W = 300, H = 150, L = 34, R = 10, T = 30, B = 26, n = vals.length, nums = vals.filter(v => v != null);
+  const head = `<div class="mini-h"><b>${esc(lab)}</b><span class="meta">${summary}</span></div>`;
+  if (!n || !nums.length) return `<div class="mini">${head}<p class="hint" style="margin:10px 0">No games in this range.</p></div>`;
+  let lo = Math.min(...nums), hi = Math.max(...nums);
+  if (!isRatio) [lo, hi] = niceAxis(lo, hi);
+  else { const pad = Math.max(0.005, (hi - lo) * 0.25); lo = Math.max(0, lo - pad); hi = Math.min(1, hi + pad); }
+  if (hi === lo) hi = lo + 1;
+  const x = i => n === 1 ? (L + W - R) / 2 : L + i * (W - L - R) / (n - 1);
+  const y = v => T + (H - T - B) * (1 - (v - lo) / (hi - lo));
+  let g = '';
+  for (const t of [lo, (lo + hi) / 2, hi]) g += `<line class="gl" x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}"/><text x="${L - 4}" y="${y(t) + 3.5}" text-anchor="end">${niceTick(t, isRatio)}</text>`;
+  if (!isRatio && lo < 0 && hi > 0) g += `<line class="zl" x1="${L}" x2="${W - R}" y1="${y(0)}" y2="${y(0)}"/>`;
+  let d = '', pen = false;
+  vals.forEach((v, i) => { if (v == null) { pen = false; return; } d += `${pen ? 'L' : 'M'}${x(i).toFixed(1)} ${y(v).toFixed(1)} `; pen = true; });
+  g += `<path class="ln" d="${d}"/>`;
+  const dots = n <= 60;
+  vals.forEach((v, i) => { if (v != null) g += `<circle class="${dots ? '' : 'dim'}" cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="${dots ? 3 : 4}"><title>${esc(bucketLong(keys[i], gran))}: ${isRatio ? niceTick(v, true) : (lab === '+/-' && v > 0 ? '+' : '') + niceTick(v, false)}</title></circle>`; });
+  const ticks = n <= 3 ? [...Array(n).keys()] : [0, Math.round((n - 1) / 2), n - 1];
+  for (const i of [...new Set(ticks)]) g += `<text x="${x(i).toFixed(1)}" y="${H - 8}" text-anchor="${i === 0 && n > 1 ? 'start' : i === n - 1 && n > 1 ? 'end' : 'middle'}">${esc(bucketShort(keys[i], gran))}</text>`;
+  return `<div class="mini">${head}<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(lab)} by ${gran}">${g}</svg></div>`;
+}
+
+function renderHist() {
+  $('histMsg').innerHTML = '';
+  if (!D.history || !D.history.players) { $('histMsg').innerHTML = '<p class="hint">This build has no game history yet. Run the daily refresh once more.</p>'; return; }
+  const range = histRange();
+  document.querySelectorAll('#histGran button').forEach(b => b.setAttribute('aria-pressed', b.dataset.gran === hs.gran));
+  document.querySelectorAll('#histPreset button').forEach(b => b.setAttribute('aria-pressed', b.dataset.hp === hs.preset));
+  document.querySelectorAll('#histMode button').forEach(b => b.setAttribute('aria-pressed', b.dataset.hm === hs.mode));
+  if (!['team', 'F', 'D', 'G'].includes(hs.scope) && !rosterPlayers().some(x => String(x.p.id) === hs.scope)) hs.scope = 'team';
+  $('histScope').innerHTML = scopeOptions(hs.scope);
+  const fromEl = $('histFrom'), toEl = $('histTo');
+  if (range) { fromEl.min = toEl.min = range.min; fromEl.max = toEl.max = range.max; fromEl.value = range.from; toEl.value = range.to; fromEl.disabled = toEl.disabled = false; }
+  else { fromEl.value = toEl.value = ''; fromEl.disabled = toEl.disabled = true; }
+
+  const players = playersFor(hs.scope);
+  const notes = [];
+  const missing = players.filter(p => !histRows(p));
+  if (missing.length) notes.push(`No history stored yet for ${missing.map(p => esc(p.name)).join(', ')}. History covers the players in <code>site/roster.json</code> when the daily build ran, so add them there and the next refresh picks them up.`);
+  const partial = players.filter(p => D.history.players[String(p.id)]?.partial);
+  if (partial.length) notes.push(`Hits, blocks and faceoff wins are missing for ${partial.map(p => esc(p.name)).join(', ')}: the NHL stats feed failed for them and the web game log has no such columns.`);
+  if (!range) { $('histNote').innerHTML = '<p class="hint">No games have been played by your players in this build yet. Charts fill in as the season goes on.</p>'; $('histSk').innerHTML = $('histG').innerHTML = ''; $('histSkH').hidden = $('histGH').hidden = true; return; }
+  if (hs.gran !== 'day' && range.from) notes.push(hs.gran === 'week' ? 'Weeks run Monday to Sunday; the first and last may be partial.' : 'Months are calendar months; the first and last may be partial.');
+  $('histNote').innerHTML = notes.map(n => `<p class="hint">${n}</p>`).join('');
+
+  const cum = hs.mode === 'cum', one = (hv, cat) => {
+    const [lab, k] = cat, vals = histSeries(hv, k, cum), isRatio = k === 'svp';
+    let summary;
+    if (isRatio) { const last = [...vals].reverse().find(v => v != null); summary = cum ? (last == null ? '–' : niceTick(last, true)) : (() => { const sv = hv.vec.reduce((s, v) => s + v[hv.fields.indexOf('sv')], 0), sa = hv.vec.reduce((s, v) => s + v[hv.fields.indexOf('sa')], 0); return sa ? niceTick(sv / sa, true) : '–'; })(); }
+    else { const tot = cum ? vals[vals.length - 1] : vals.reduce((a, b) => a + b, 0); summary = (k === 'pm' && tot > 0 ? '+' : '') + Math.round(tot) + (cum ? ' so far' : ' in range'); }
+    return svgLine(lab, hv.keys, vals, hs.gran, isRatio, summary);
+  };
+  const sk = players.filter(p => p.kind === 'S'), gl = players.filter(p => p.kind === 'G');
+  $('histSkH').hidden = !sk.length; $('histGH').hidden = !gl.length;
+  const per = { day: 'day', week: 'week', month: 'month' }[hs.gran];
+  $('histSkH').textContent = `Skater categories, ${cum ? 'running total' : 'total per ' + per}`;
+  $('histGH').textContent = `Goalie categories, ${cum ? 'running total' : 'total per ' + per}`;
+  if (sk.length) { const hv = histVectors(sk, 'S', range, hs.gran); $('histSk').innerHTML = SK.map(c => one(hv, c)).join(''); } else $('histSk').innerHTML = '';
+  if (gl.length) { const hv = histVectors(gl, 'G', range, hs.gran); $('histG').innerHTML = GC.map(c => one(hv, c)).join(''); } else $('histG').innerHTML = '';
+  if (!players.length) $('histNote').innerHTML = '<p class="hint">No players in this selection.</p>';
 }
 
 // ---------------------------------------------------------------- state
@@ -886,7 +1126,20 @@ document.addEventListener('click', e => {
   else if (b.dataset.wtoggle) { const w = b.dataset.wtoggle; fm.hidden.has(w) ? fm.hidden.delete(w) : fm.hidden.add(w); renderForm(); }
   else if (b.dataset.heatwin) { fm.heatWin = b.dataset.heatwin; renderHeat(); }
   else if (b.dataset.cmp) { fm.cmp = b.dataset.cmp; renderHeat(); }
-  else if (b.dataset.scope) { fm.scope = b.dataset.scope; renderForm(); renderHeat(); $('formScope').scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+  else if (b.dataset.scope) { fm.scope = b.dataset.scope; hs.scope = b.dataset.scope; fm.mode = 'windows'; renderForm(); renderHist(); renderHeat(); $('formMode').scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+  else if (b.dataset.fmode) { fm.mode = b.dataset.fmode; renderForm(); }
+  else if (b.dataset.fwin) { fm.win = b.dataset.fwin; renderForm(); }
+  else if (b.dataset.ent) {
+    const e = b.dataset.ent; fm.note = '';
+    if (fm.sel.includes(e)) fm.sel = fm.sel.filter(x => x !== e);
+    else if (fm.sel.length >= MAX_SEL) fm.note = `Up to ${MAX_SEL} at a time. Remove one first.`;
+    else fm.sel.push(e);
+    renderForm();
+  }
+  else if (b.hasAttribute('data-fclear')) { fm.sel = []; fm.note = ''; renderForm(); }
+  else if (b.dataset.gran) { hs.gran = b.dataset.gran; renderHist(); }
+  else if (b.dataset.hp) { hs.preset = b.dataset.hp; hs.from = hs.to = null; renderHist(); }
+  else if (b.dataset.hm) { hs.mode = b.dataset.hm; renderHist(); }
   else if (b.hasAttribute('data-close')) $('dlg').close();
   else if (b.id === 'adopt') {
     const lu = lineupFor(ui.day), start = new Set(['F', 'D', 'G'].flatMap(g => lu[g].filter(x => x.start).map(x => x.p.id)));
@@ -911,6 +1164,10 @@ document.addEventListener('change', e => {
   else if (t.dataset.w) { W[t.dataset.w] = Number(t.value); saveW(); renderCats(); }
   else if (t.id === 'specCat' || t.id === 'specAll') renderSpecialists();
   else if (t.id === 'formScope') { fm.scope = t.value; renderForm(); renderHeat(); }
+  else if (t.id === 'histScope') { hs.scope = t.value; renderHist(); }
+  else if (t.id === 'histFrom' || t.id === 'histTo') {
+    if ($('histFrom').value && $('histTo').value) { hs.preset = 'custom'; hs.from = $('histFrom').value; hs.to = $('histTo').value; renderHist(); }
+  }
   else if (t.id === 'importFile' && t.files[0]) {
     t.files[0].text().then(txt => { const j = JSON.parse(txt); roster = (j.players || []).map(p => ({ id: Number(p.id), name: p.name, status: p.status || 'Healthy', active: !!p.active })); saveRoster(); renderRoster(); })
       .catch(() => alert('That file is not a roster export.'));

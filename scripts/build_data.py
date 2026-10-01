@@ -53,7 +53,7 @@ def get(url, params=None, tries=4):
             r = SESSION.get(url, params=params, timeout=30)
             if r.status_code == 200:
                 return r.json()
-            last = f"HTTP {r.status_code}"
+            last = f"HTTP {r.status_code}: {r.text[:200].strip()}"
             if r.status_code not in (429, 500, 502, 503, 504):
                 break
         except requests.RequestException as e:
@@ -145,9 +145,6 @@ def teams_block(cur, prev):
                 "sa": r.get("shotsAgainstPerGame"),
                 "pts": r.get("pointPct"),
             }
-    # teams that existed last season but not this one (relocation) drop out once cur has data
-    if any("cur" in v for v in out.values()):
-        out = {k: v for k, v in out.items() if "cur" in v}
     return out
 
 
@@ -235,11 +232,19 @@ def build(now_utc):
     cur, prev = season_ids(today)
     season_filter = lambda s: f"seasonId={s} and gameTypeId=2"
 
+    print(f"Build date {today} ET, season {cur}, previous {prev}", flush=True)
     teams = teams_block(cur, prev)
+    print(f"Team list: {len(teams)} clubs with stats", flush=True)
     rosters = rosters_block(sorted(teams))
+    # Keep only clubs that exist today: a defunct or relocated club has no current roster.
+    # (Do not filter on current-season stats: early in the season most teams have none yet.)
+    active = {v["team"] for v in rosters.values()}
+    teams = {k: v for k, v in teams.items() if k in active}
 
     sk_cur, sk_prev = skater_block(season_filter(cur)), skater_block(season_filter(prev))
     gl_cur, gl_prev = goalie_block(season_filter(cur)), goalie_block(season_filter(prev))
+    print(f"Skaters: {len(sk_cur)} this season, {len(sk_prev)} last. Goalies: {len(gl_cur)} / {len(gl_prev)}. "
+          f"Active clubs: {len(teams)}", flush=True)
 
     # Last 7 / 14 / 30 days, league-wide. Optional: a window that fails is left empty and the
     # site hides it. "rec" (14 days) also feeds the projection model's recent-form weight.

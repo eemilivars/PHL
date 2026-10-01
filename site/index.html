@@ -51,6 +51,7 @@ nav button[aria-selected="true"] { color: #fff; border-bottom-color: #fff; }
 main { max-width: 1280px; margin: 0 auto; padding: 20px; }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
 .stack { display: grid; gap: 16px; }
+.stack > *, .grid2 > * { min-width: 0; }
 .grid2 { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
 @media (max-width: 1000px) { .grid2 { grid-template-columns: 1fr; } }
 
@@ -136,6 +137,38 @@ dialog::backdrop { background: rgba(10, 22, 40, .55); }
 .dlg-body { padding: 12px 18px 18px; display: grid; gap: 14px; }
 footer { max-width: 1280px; margin: 0 auto; padding: 0 20px 30px; font-size: 12.5px; color: var(--muted); }
 footer p { max-width: 90ch; margin: 4px 0; }
+/* recent form and percentiles */
+:root { --w7: #A8CBF0; --w14: #5E98D9; --w30: #2F6DB5; --wcur: #0F2240; --wprev: #B4BDC9;
+  --h1: #F2C4C4; --h1t: #7A1414; --h2: #FBE3E3; --h3: #EEF2F6; --h4: #DDF0E5; --h5: #B5E0C6; --h5t: #145C3B; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --w7: #2C4A70; --w14: #3F6FA8; --w30: #6EA4E6; --wcur: #D5E3F5; --wprev: #5A6B80;
+  --h1: #5A2028; --h1t: #FFC9C9; --h2: #3A1E26; --h3: #1B2E4A; --h4: #17402F; --h5: #1F6B48; --h5t: #D8F5E4; } }
+.panel-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.panel-head select { padding: 6px 8px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); max-width: 100%; }
+.ctrls { display: flex; gap: 8px; flex-wrap: wrap; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+.seg button { border: 0; border-left: 1px solid var(--line); background: var(--surface); padding: 5px 10px; font-size: 13px; cursor: pointer; }
+.seg button:first-child { border-left: 0; }
+.seg button[aria-pressed="true"] { background: var(--navy); color: #fff; }
+.seg button:disabled { color: var(--muted); cursor: not-allowed; opacity: .55; }
+.legend { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.lg { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 3px 10px; font-size: 13px; cursor: pointer; }
+.lg i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+.lg[aria-pressed="false"] { opacity: .45; }
+.lg:disabled { cursor: not-allowed; opacity: .35; }
+.chart { margin-top: 8px; overflow-x: auto; }
+.chart svg { display: block; max-width: none; }
+.chart text { fill: var(--muted); font-family: var(--body); font-size: 12px; }
+.chart .cat-l { fill: var(--ink); font-weight: 600; }
+.chart .grid { stroke: var(--line); stroke-width: 1; }
+.chart .mid { stroke: var(--muted); stroke-dasharray: 4 3; }
+.chart .na { fill: var(--muted); font-size: 11px; }
+table.heat td.p { text-align: center; font-variant-numeric: tabular-nums; font-weight: 600; min-width: 46px; }
+table.heat td.small { font-style: italic; font-weight: 400; opacity: .7; }
+.h1 { background: var(--h1); color: var(--h1t); } .h2 { background: var(--h2); } .h3 { background: var(--h3); }
+.h4 { background: var(--h4); } .h5 { background: var(--h5); color: var(--h5t); }
+table.heat tr.sel td:first-child { box-shadow: inset 4px 0 0 var(--blue); }
+table.heat tfoot td { border-top: 2px solid var(--line); }
 [hidden] { display: none !important; }
 </style>
 </head>
@@ -190,6 +223,29 @@ footer p { max-width: 90ch; margin: 4px 0; }
   </section>
 
   <section data-view="cats" class="stack" hidden>
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Recent form</h2>
+        <select id="formScope" aria-label="Show form for"></select>
+      </div>
+      <p class="hint">Average league percentile per game of the selected players in each time window. 50 is a typical NHL regular; 80 means better than 80% of the league. Click a window to hide or show it.</p>
+      <div class="legend" id="formLegend"></div>
+      <div id="formSkChart" class="chart"></div>
+      <div id="formGChart" class="chart"></div>
+      <h3 style="margin-top:16px">Totals by window</h3>
+      <p class="hint">Raw totals of the selected players, whether or not they were in your active lineup.</p>
+      <div class="table-wrap" style="margin-top:6px"><table id="formTotals"></table></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <h2>League percentiles by player</h2>
+        <div class="ctrls"><div class="seg" id="heatWin" role="group" aria-label="Time window"></div>
+          <div class="seg" id="heatCmp" role="group" aria-label="Compare with"><button data-cmp="all">All skaters</button><button data-cmp="pos">Same position</button></div></div>
+      </div>
+      <p class="hint">Each cell is the player's per-game percentile against every NHL player with enough games in the window. Italic cells are small samples. Click a name to chart that player above.</p>
+      <div class="table-wrap" style="margin-top:8px"><table id="heatSk" class="heat"></table></div>
+      <div class="table-wrap" style="margin-top:12px"><table id="heatG" class="heat"></table></div>
+    </div>
     <div class="grid2">
       <div class="panel">
         <h2>Category strength</h2>
@@ -300,7 +356,8 @@ function prep() {
   // skaters: replacement prior per position group, then shrunk per-game rates
   const cats = SK.map(c => c[1]);
   const sk = D.skaters.map(s => ({ id: s.id, name: s.n, team: s.t, pos: s.p, group: s.p === 'D' ? 'D' : 'F', kind: 'S',
-    cur: obj(s.cur, D.skaterFields), prev: obj(s.prev, D.skaterFields), rec: obj(s.rec, D.skaterFields) }));
+    cur: obj(s.cur, D.skaterFields), prev: obj(s.prev, D.skaterFields), rec: obj(s.rec, D.skaterFields),
+    r7: obj(s.r7, D.skaterFields), r30: obj(s.r30, D.skaterFields) }));
   const raw = p => { const gp = (p.cur?.gp || 0) + (p.prev?.gp || 0); if (gp < 20) return null;
     const o = {}; cats.forEach(k => o[k] = ((p.cur?.[k] || 0) + (p.prev?.[k] || 0)) / gp); return o; };
   const REPL = {};
@@ -330,7 +387,8 @@ function prep() {
   // goalies
   for (const s of D.goalies) {
     const p = { id: s.id, name: s.n, team: s.t, pos: 'G', group: 'G', kind: 'G',
-      cur: obj(s.cur, D.goalieFields), prev: obj(s.prev, D.goalieFields), rec: obj(s.rec, D.goalieFields) };
+      cur: obj(s.cur, D.goalieFields), prev: obj(s.prev, D.goalieFields), rec: obj(s.rec, D.goalieFields),
+      r7: obj(s.r7, D.goalieFields), r30: obj(s.r30, D.goalieFields) };
     const c = p.cur || { gp: 0, gs: 0, w: 0, sv: 0, sa: 0, so: 0 }, v = p.prev;
     const pw = v && v.gs ? (v.w + 4 * 0.45) / (v.gs + 4) : 0.42;
     const psv = v && v.sa ? (v.sv + 250 * 0.895) / (v.sa + 250) : 0.893;
@@ -547,6 +605,7 @@ function renderWeek() {
 }
 
 function renderCats() {
+  renderForm(); renderHeat();
   const sk = rosterPlayers().filter(x => x.p.kind === 'S' && x.r.status !== 'IR').map(x => x.p).sort((a, b) => value(b, null) - value(a, null)).slice(0, 10);
   const gl = rosterPlayers().filter(x => x.p.kind === 'G' && x.r.status !== 'IR').map(x => x.p).sort((a, b) => value(b, null) - value(a, null)).slice(0, 2);
   // An average team's best 10 skaters are roughly the league's top 100 by value; its 2 goalies the top 20.
@@ -666,6 +725,149 @@ function render() {
   if (ui.tab === 'roster') renderRoster();
 }
 
+// ---------------------------------------------------------------- recent form & percentiles
+const WINDOWS = [['r7', '7 days'], ['rec', '14 days'], ['r30', '30 days'], ['cur', 'Season'], ['prev', 'Last season']];
+const WCOLOR = { r7: 'var(--w7)', rec: 'var(--w14)', r30: 'var(--w30)', cur: 'var(--wcur)', prev: 'var(--wprev)' };
+const MIN_GP = { S: { r7: 2, rec: 3, r30: 6, prev: 20 }, G: { r7: 1, rec: 2, r30: 3, prev: 10 } };
+const fm = { scope: 'team', hidden: new Set(['prev']), heatWin: 'rec', cmp: 'all' };
+const PCT_CACHE = new Map();
+const AVAIL = {};
+
+function winLabel(w) {
+  const r = D.windows && D.windows[w];
+  return r ? `${dayMonth(r[0])} to ${dayMonth(r[1])}` : w === 'cur' ? D.season.slice(0, 4) + '-' + D.season.slice(6) + ' to date' : w === 'prev' ? D.prevSeason.slice(0, 4) + '-' + D.prevSeason.slice(6) : '';
+}
+function winAvail(w) {
+  if (!(w in AVAIL)) AVAIL[w] = [...P.values()].some(p => p[w] && p[w].gp);
+  return AVAIL[w];
+}
+function rateOf(p, w, k) {
+  const o = p[w]; if (!o || !o.gp) return null;
+  if (k === 'svp') return o.sa ? o.sv / o.sa : null;
+  return o[k] / o.gp;
+}
+function minGp(kind, w) {
+  const m = MIN_GP[kind][w]; if (m != null) return m;
+  // season to date: a quarter of the most games anyone has played
+  const most = Math.max(0, ...[...P.values()].filter(p => p.kind === kind && p.cur).map(p => p.cur.gp));
+  return Math.max(kind === 'G' ? 2 : 3, Math.round(most * 0.25));
+}
+function poolValues(kind, w, k, grp) {
+  const key = [kind, w, k, grp || ''].join('|');
+  if (!PCT_CACHE.has(key)) {
+    const mg = minGp(kind, w);
+    PCT_CACHE.set(key, [...P.values()].filter(p => p.kind === kind && (!grp || p.group === grp) && p[w] && p[w].gp >= mg)
+      .map(p => rateOf(p, w, k)).filter(v => v != null).sort((a, b) => a - b));
+  }
+  return PCT_CACHE.get(key);
+}
+function pct(p, w, k, samePos) {
+  const v = rateOf(p, w, k); if (v == null) return null;
+  const xs = poolValues(p.kind, w, k, samePos && p.kind === 'S' ? p.group : null);
+  if (xs.length < 10) return null;
+  let lo = 0, hi = xs.length;
+  while (lo < hi) { const m = (lo + hi) >> 1; if (xs[m] < v) lo = m + 1; else hi = m; }
+  let eq = lo; while (eq < xs.length && xs[eq] === v) eq++;
+  return 100 * (lo + (eq - lo) / 2) / xs.length;
+}
+// games-weighted average percentile of a group of players
+function groupPct(players, w, k, samePos) {
+  let s = 0, n = 0;
+  for (const p of players) { const v = pct(p, w, k, samePos); if (v == null) continue; const g = p[w].gp; s += v * g; n += g; }
+  return n ? s / n : null;
+}
+function scopePlayers() {
+  const rp = rosterPlayers().map(x => x.p);
+  if (fm.scope === 'team') return rp;
+  if (['F', 'D', 'G'].includes(fm.scope)) return rp.filter(p => p.group === fm.scope);
+  return rp.filter(p => String(p.id) === fm.scope);
+}
+
+function svgBars(cats, series) {
+  const gw = cats.length > 5 ? 96 : 84, left = 40, top = 12, ph = 180, W = left + cats.length * gw + 10, H = top + ph + 34;
+  const y = v => top + ph - v / 100 * ph;
+  const vis = series.filter(s => !s.hidden);
+  const bw = vis.length ? Math.min(14, (gw - 16) / vis.length) : 0;
+  let g = '';
+  for (const v of [0, 25, 50, 75, 100]) g += `<line class="${v === 50 ? 'mid' : 'grid'}" x1="${left}" x2="${W - 10}" y1="${y(v)}" y2="${y(v)}"/><text x="${left - 6}" y="${y(v) + 4}" text-anchor="end">${v}</text>`;
+  cats.forEach(([lab], ci) => {
+    const x0 = left + ci * gw + (gw - bw * vis.length) / 2;
+    vis.forEach((s, si) => {
+      const v = s.values[ci], x = x0 + si * bw;
+      if (v == null) { g += `<text class="na" x="${x + bw / 2}" y="${y(0) - 3}" text-anchor="middle">–</text>`; return; }
+      g += `<rect x="${x + 1}" y="${y(v)}" width="${bw - 2}" height="${Math.max(1, y(0) - y(v))}" rx="2" fill="${s.color}"><title>${esc(lab)}, ${esc(s.label)}: ${Math.round(v)}th percentile</title></rect>`;
+    });
+    g += `<text class="cat-l" x="${left + ci * gw + gw / 2}" y="${top + ph + 20}" text-anchor="middle">${esc(lab)}</text>`;
+  });
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Percentile by category and time window">${g}</svg>`;
+}
+
+function renderForm() {
+  const sel = $('formScope');
+  if (!sel.options.length || sel.dataset.n !== String(roster.length)) {
+    const rp = rosterPlayers().map(x => x.p).sort((a, b) => 'FDG'.indexOf(a.group) - 'FDG'.indexOf(b.group) || a.name.localeCompare(b.name));
+    sel.innerHTML = `<option value="team">Whole roster</option><option value="F">Forwards</option><option value="D">Defensemen</option><option value="G">Goalies</option>` +
+      `<optgroup label="Players">${rp.map(p => `<option value="${p.id}">${esc(p.name)} (${p.group})</option>`).join('')}</optgroup>`;
+    sel.dataset.n = String(roster.length);
+  }
+  if (![...sel.options].some(o => o.value === fm.scope)) fm.scope = 'team';
+  sel.value = fm.scope;
+
+  $('formLegend').innerHTML = WINDOWS.map(([w, lab]) => {
+    const ok = winAvail(w);
+    return `<button class="lg" data-wtoggle="${w}" aria-pressed="${ok && !fm.hidden.has(w)}" ${ok ? '' : 'disabled title="No data for this window in today\'s build"'}><i style="background:${WCOLOR[w]}"></i>${lab}<span class="meta">${ok ? winLabel(w) : 'no data'}</span></button>`;
+  }).join('');
+
+  const players = scopePlayers(), sk = players.filter(p => p.kind === 'S'), gl = players.filter(p => p.kind === 'G');
+  const series = (list, cats) => WINDOWS.map(([w, lab]) => ({ label: lab, color: WCOLOR[w], hidden: fm.hidden.has(w) || !winAvail(w),
+    values: cats.map(([, k]) => groupPct(list, w, k, false)) }));
+  $('formSkChart').innerHTML = sk.length ? `<h3>Skater categories</h3>${svgBars(SK, series(sk, SK))}` : '';
+  const gcats = GC.map(([lab, k]) => [lab, k]);
+  $('formGChart').innerHTML = gl.length ? `<h3>Goalie categories</h3>${svgBars(gcats, series(gl, gcats))}` : '';
+  if (!players.length) $('formSkChart').innerHTML = '<p class="hint">No players in this selection.</p>';
+
+  // raw totals per window
+  const cols = (sk.length ? [['GP', 'gp', 'S']].concat(SK.map(c => [c[0], c[1], 'S'])) : []).concat(gl.length ? [['GS', 'gs', 'G'], ['W', 'w', 'G'], ['SV', 'sv', 'G'], ['SV%', 'svp', 'G'], ['SHO', 'so', 'G']] : []);
+  let h = `<thead><tr><th>Window</th>${cols.map(c => `<th class="r">${c[0]}</th>`).join('')}</tr></thead><tbody>`;
+  for (const [w, lab] of WINDOWS) {
+    if (!winAvail(w)) continue;
+    h += `<tr><td>${lab} <span class="meta">${winLabel(w)}</span></td>` + cols.map(([, k, kind]) => {
+      const list = kind === 'S' ? sk : gl;
+      if (k === 'svp') { const sv = list.reduce((s, p) => s + (p[w]?.sv || 0), 0), sa = list.reduce((s, p) => s + (p[w]?.sa || 0), 0);
+        return `<td class="r num">${sa ? (sv / sa).toFixed(3).replace(/^0/, '') : '–'}</td>`; }
+      const v = list.reduce((s, p) => s + (p[w]?.[k] || 0), 0);
+      return `<td class="r num">${k === 'pm' && v > 0 ? '+' : ''}${Math.round(v)}</td>`;
+    }).join('') + '</tr>';
+  }
+  $('formTotals').innerHTML = h + '</tbody>';
+}
+
+function heatCls(v) { return v == null ? '' : v < 20 ? 'h1' : v < 40 ? 'h2' : v < 60 ? 'h3' : v < 80 ? 'h4' : 'h5'; }
+function renderHeat() {
+  if (!winAvail(fm.heatWin)) fm.heatWin = WINDOWS.map(x => x[0]).find(winAvail) || 'cur';
+  $('heatWin').innerHTML = WINDOWS.map(([w, lab]) => `<button data-heatwin="${w}" aria-pressed="${fm.heatWin === w}" ${winAvail(w) ? '' : 'disabled'}>${lab}</button>`).join('');
+  $('heatCmp').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.cmp === fm.cmp));
+  const w = fm.heatWin, same = fm.cmp === 'pos';
+  const rp = rosterPlayers().map(x => x.p).sort((a, b) => 'FDG'.indexOf(a.group) - 'FDG'.indexOf(b.group) || a.name.localeCompare(b.name));
+  const table = (list, cats, kind, title) => {
+    if (!list.length) return '';
+    const mg = minGp(kind, w);
+    let h = `<thead><tr><th>${title}</th><th class="r">GP</th>${cats.map(c => `<th class="c">${c[0]}</th>`).join('')}</tr></thead><tbody>`;
+    for (const p of list) {
+      const gp = p[w]?.gp || 0, small = gp > 0 && gp < mg;
+      h += `<tr class="${fm.scope === String(p.id) ? 'sel' : ''}"><td><button class="pname" data-scope="${p.id}">${esc(p.name)}</button> <span class="meta">${p.group}</span></td><td class="r num">${gp || '–'}</td>` +
+        cats.map(([lab, k]) => { const v = pct(p, w, k, same);
+          return `<td class="p ${heatCls(v)} ${small ? 'small' : ''}" title="${esc(p.name)}, ${lab}: ${v == null ? 'no games' : Math.round(v) + 'th percentile' + (small ? ' (small sample)' : '')}">${v == null ? '–' : Math.round(v)}</td>`; }).join('') + '</tr>';
+    }
+    h += `</tbody><tfoot><tr><td>Roster average</td><td></td>${cats.map(([, k]) => { const v = groupPct(list, w, k, same); return `<td class="p ${heatCls(v)}">${v == null ? '–' : Math.round(v)}</td>`; }).join('')}</tr></tfoot>`;
+    return h;
+  };
+  $('heatSk').innerHTML = table(rp.filter(p => p.kind === 'S'), SK, 'S', 'Skater');
+  $('heatG').innerHTML = table(rp.filter(p => p.kind === 'G'), GC, 'G', 'Goalie');
+  const pool = poolValues('S', w, 'g', null).length;
+  $('heatSk').insertAdjacentHTML('afterbegin', `<caption style="caption-side:bottom;text-align:left;padding-top:6px" class="meta">Compared with ${pool} skaters with ${minGp('S', w)}+ games in this window${same ? ', same position only' : ''}.${pool < 10 ? ' Not enough games yet for percentiles.' : ''}</caption>`);
+}
+
 // ---------------------------------------------------------------- state
 function saveRoster() { try { localStorage.setItem(LS_ROSTER, JSON.stringify(roster)); } catch (e) {} }
 function saveW() { try { localStorage.setItem(LS_W, JSON.stringify(W)); } catch (e) {} }
@@ -681,6 +883,10 @@ document.addEventListener('click', e => {
   if (b.dataset.tab) { ui.tab = b.dataset.tab; render(); }
   else if (b.dataset.day) { ui.day = b.dataset.day; renderDays(); renderLineup(); }
   else if (b.dataset.open) openPlayer(b.dataset.open);
+  else if (b.dataset.wtoggle) { const w = b.dataset.wtoggle; fm.hidden.has(w) ? fm.hidden.delete(w) : fm.hidden.add(w); renderForm(); }
+  else if (b.dataset.heatwin) { fm.heatWin = b.dataset.heatwin; renderHeat(); }
+  else if (b.dataset.cmp) { fm.cmp = b.dataset.cmp; renderHeat(); }
+  else if (b.dataset.scope) { fm.scope = b.dataset.scope; renderForm(); renderHeat(); $('formScope').scrollIntoView({ behavior: 'smooth', block: 'center' }); }
   else if (b.hasAttribute('data-close')) $('dlg').close();
   else if (b.id === 'adopt') {
     const lu = lineupFor(ui.day), start = new Set(['F', 'D', 'G'].flatMap(g => lu[g].filter(x => x.start).map(x => x.p.id)));
@@ -704,6 +910,7 @@ document.addEventListener('change', e => {
   else if (t.dataset.active) { roster.find(r => r.id === Number(t.dataset.active)).active = t.checked; saveRoster(); renderRoster(); }
   else if (t.dataset.w) { W[t.dataset.w] = Number(t.value); saveW(); renderCats(); }
   else if (t.id === 'specCat' || t.id === 'specAll') renderSpecialists();
+  else if (t.id === 'formScope') { fm.scope = t.value; renderForm(); renderHeat(); }
   else if (t.id === 'importFile' && t.files[0]) {
     t.files[0].text().then(txt => { const j = JSON.parse(txt); roster = (j.players || []).map(p => ({ id: Number(p.id), name: p.name, status: p.status || 'Healthy', active: !!p.active })); saveRoster(); renderRoster(); })
       .catch(() => alert('That file is not a roster export.'));

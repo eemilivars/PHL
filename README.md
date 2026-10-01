@@ -1,4 +1,3 @@
-[README.md](https://github.com/user-attachments/files/32809855/README.md)
 # PHL Lineup
 
 Daily lineup helper for the Puistola Hockey League (Yahoo league 45520, 10 teams, head-to-head categories).
@@ -26,7 +25,7 @@ If a run fails, GitHub emails you. The site keeps the last good data until the n
 1. **Roster tab**: keep your 16 players and their status (Healthy, DTD, Out, IR) current. Tick **Active** for the players you have in Yahoo's active slots.
 2. **Lineup tab**: pick the day. The top box lists the swaps to make in Yahoo. After making them, press "Save this as my active lineup".
 3. **Week plan**: shows the week's games per player, recommended starts, and days with empty or overbooked slots.
-4. **Categories**: season totals, strength against an average team, category weights, and pickup candidates per category.
+4. **Categories**: recent form (7, 14 and 30 days, season, last season) as a chart and totals table for the whole roster, a position group or one player; a league-percentile table for every player; season totals, strength against an average team, category weights, and pickup candidates per category.
 
 Game days are Eastern Time, which is what Yahoo uses. "Tonight" games start in the Finnish night.
 
@@ -63,6 +62,8 @@ The roster is saved in the browser. To use it on another device, export it on th
 
 **Category strength.** Your best 10 skaters' per-game rates are compared with the league's top 100 skaters by value, which is roughly what an average team's best 10 are. Goalies are compared the same way (your top 2 against the top 20). This uses the whole roster, not the lineup you set.
 
+**Recent form and percentiles.** For each window the build pulls league-wide per-player totals. A player's percentile is the share of NHL players with a lower per-game rate in that window, counting only players with enough games: 2 for 7 days, 3 for 14 days, 6 for 30 days, a quarter of the leader's games for the season, and 20 for last season (goalies: 1, 2, 3, a quarter, 10). Ties count half. SV% uses saves over shots. A group's value is the games-weighted average of its players' percentiles. "Same position" compares forwards with forwards and defensemen with defensemen.
+
 **Specialists.** Skaters ranked by per-game rate in one category. The 140 highest-value skaters are hidden by default because a 10-team league rosters about that many. The tool does not know other fantasy rosters, so always check availability in Yahoo.
 
 ## Data sources
@@ -73,12 +74,12 @@ All endpoints are public, unofficial and undocumented. Community reference: http
 |---|---|
 | Skater season stats | `api.nhle.com/stats/rest/en/skater/summary`, `/realtime` (hits, blocks), `/faceoffwins` |
 | Goalie season stats | `api.nhle.com/stats/rest/en/goalie/summary` |
-| Last 14 days | Same reports with `isAggregate=true`, `isGame=true` and a `gameDate` range |
+| Last 7, 14 and 30 days | Same reports with `isAggregate=true` and a `gameDate` range. Tries `isGame=true` first, then without. A response is discarded if any player shows more games than days in the window, which means the date filter was ignored |
 | Team rates | `api.nhle.com/stats/rest/en/team/summary`, team codes from `/en/team` |
 | Current NHL team of each player | `api-web.nhle.com/v1/roster/{TEAM}/current` (handles trades and call-ups) |
 | Schedule | `api-web.nhle.com/v1/schedule/{date}` (3 weeks from this Monday) |
 
-About 45 requests per run.
+About 60 requests per run.
 
 ## data.json
 
@@ -88,11 +89,12 @@ About 45 requests per run.
 | `todayET` | Build date in Eastern Time |
 | `season`, `prevSeason` | Season ids, for example `20262027` |
 | `recentWindow` | First and last date of the 14-day form window |
+| `windows` | First and last date of each form window: `r7`, `rec` (14 days), `r30` |
 | `skaterFields` | Order of values in skater arrays: gp, g, a, pm, ppp, gwg, sog, fw, hit, blk, toi (minutes per game) |
 | `goalieFields` | Order of values in goalie arrays: gp, gs, w, sv, sa, so |
 | `teams.{ABBR}` | `name`, and `cur` / `prev` objects with gp, gf, ga, sf, sa (per game) and pts (points %) |
 | `games[]` | `id`, `d` (ET date), `h` home, `a` away, `t` start time UTC. Regular season only |
-| `skaters[]` | `id` (NHL player id), `n` name, `t` current team, `p` position (C, L, R, D), `cur` / `prev` / `rec` stat arrays or null |
+| `skaters[]` | `id` (NHL player id), `n` name, `t` current team, `p` position (C, L, R, D), stat arrays or null for `cur` (season), `prev` (last season), `r7`, `rec` (14 days), `r30` |
 | `goalies[]` | Same shape with goalie arrays |
 | `warnings[]` | Non-fatal problems from the build, shown in the page footer |
 
@@ -108,7 +110,7 @@ About 45 requests per run.
 ## Known limits
 
 - **The NHL can change these endpoints without notice.** Validation stops a broken build from being published, but a fix needs a code change.
-- **The last-14-days query is the least certain part.** If it fails, the build logs a warning and the page uses season rates only.
+- **The 7/14/30-day queries are the least certain part.** A window that fails or ignores its date filter is left empty with a warning in the page footer; the chart greys it out, and the lineup model falls back to season rates if the 14-day window is missing.
 - **No starting goalie confirmations.** Start chance is an estimate from usage patterns. Check morning skate reports for confirmed starters on close calls.
 - **No injury feed.** Status is manual.
 - **Yahoo positions.** F slots take any forward. Yahoo's own C/LW/RW eligibility does not matter in this league, so the tool uses the NHL position only to split F from D.

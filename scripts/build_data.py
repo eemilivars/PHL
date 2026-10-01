@@ -12,6 +12,7 @@ Sources
   api-web.nhle.com/v1          current team rosters (who plays where today), schedule
 
 Output: site/data.json (schema documented in README.md, "data.json" section)
+Requests per run: about 60 (32 rosters, 3 schedule weeks, ~25 stats reports)
 
 Exit code is non-zero if validation fails. The GitHub Action then stops before
 deploying, so the site keeps yesterday's data instead of publishing broken data.
@@ -189,6 +190,42 @@ def schedule_block(start, days=21):
     return sorted(games.values(), key=lambda g: (g["d"], g["t"] or ""))
 
 
+WINDOWS = {"r7": 7, "rec": 14, "r30": 30}
+
+
+def window_blocks(today):
+    """Aggregate stats per player over the last N days, for every window in WINDOWS.
+
+    Tries the documented date-range form first (isAggregate + isGame), then without isGame.
+    A response is rejected if any player has more games than days in the window, which
+    means the date filter was ignored and the numbers are season or career totals.
+    """
+    out, meta = {}, {}
+    for key, days in WINDOWS.items():
+        lo, hi = today - dt.timedelta(days=days), today - dt.timedelta(days=1)
+        cayenne = f'gameDate<="{hi} 23:59:59" and gameDate>="{lo}" and gameTypeId=2'
+        result = None
+        for is_game in (True, False):
+            try:
+                sk = skater_block(cayenne, aggregate=True, is_game=is_game)
+                gl = goalie_block(cayenne, aggregate=True, is_game=is_game)
+            except RuntimeError as e:
+                warn(f"{days}-day window (isGame={is_game}) failed: {e}")
+                continue
+            most = max([v["gp"] for v in sk.values()] + [v["gp"] for v in gl.values()] + [0])
+            if most > days:
+                warn(f"{days}-day window (isGame={is_game}) ignored the date filter (max {most} GP); discarded")
+                continue
+            result = (sk, gl)
+            break
+        if result is None:
+            warn(f"{days}-day window unavailable today; the site hides it")
+            result = ({}, {})
+        out[key] = result
+        meta[key] = [lo.isoformat(), hi.isoformat()]
+    return out, meta
+
+
 def pack(stats, fields):
     return [stats.get(f, 0) for f in fields] if stats else None
 
@@ -204,15 +241,11 @@ def build(now_utc):
     sk_cur, sk_prev = skater_block(season_filter(cur)), skater_block(season_filter(prev))
     gl_cur, gl_prev = goalie_block(season_filter(cur)), goalie_block(season_filter(prev))
 
-    # Last 14 days. Optional: if the date-range query fails, the site falls back to season rates.
-    lo, hi = today - dt.timedelta(days=14), today - dt.timedelta(days=1)
-    rec_filter = f'gameDate<="{hi} 23:59:59" and gameDate>="{lo}" and gameTypeId=2'
-    try:
-        sk_rec = skater_block(rec_filter, aggregate=True, is_game=True)
-        gl_rec = goalie_block(rec_filter, aggregate=True, is_game=True)
-    except RuntimeError as e:
-        warn(f"recent-form query failed, site will use season rates only: {e}")
-        sk_rec, gl_rec = {}, {}
+    # Last 7 / 14 / 30 days, league-wide. Optional: a window that fails is left empty and the
+    # site hides it. "rec" (14 days) also feeds the projection model's recent-form weight.
+    win, win_meta = window_blocks(today)
+    (sk_r7, gl_r7), (sk_rec, gl_rec), (sk_r30, gl_r30) = win["r7"], win["rec"], win["r30"]
+    lo, hi = win_meta["rec"]
 
     monday = today - dt.timedelta(days=today.weekday())
     schedule = schedule_block(min(monday, today - dt.timedelta(days=1)), days=21)
@@ -238,6 +271,7 @@ def build(now_utc):
         skaters.append({
             "id": pid, "n": name, "t": team_of(pid, sk_cur, sk_prev), "p": pos,
             "cur": pack(c, SKATER_FIELDS), "prev": pack(pv, SKATER_FIELDS), "rec": pack(rc, SKATER_FIELDS),
+            "r7": pack(sk_r7.get(pid), SKATER_FIELDS), "r30": pack(sk_r30.get(pid), SKATER_FIELDS),
         })
     goalie_ids = set(gl_cur) | {p for p, v in gl_prev.items() if v["gp"] >= 3} | \
         {p for p, v in rosters.items() if v["pos"] == "G"}
@@ -249,6 +283,7 @@ def build(now_utc):
         goalies.append({
             "id": pid, "n": name, "t": team_of(pid, gl_cur, gl_prev),
             "cur": pack(c, GOALIE_FIELDS), "prev": pack(pv, GOALIE_FIELDS), "rec": pack(rc, GOALIE_FIELDS),
+            "r7": pack(gl_r7.get(pid), GOALIE_FIELDS), "r30": pack(gl_r30.get(pid), GOALIE_FIELDS),
         })
 
     return {
@@ -256,7 +291,8 @@ def build(now_utc):
         "todayET": today.isoformat(),
         "season": cur,
         "prevSeason": prev,
-        "recentWindow": [lo.isoformat(), hi.isoformat()],
+        "recentWindow": [lo, hi],
+        "windows": win_meta,          # {"r7": [from, to], "rec": [...], "r30": [...]}
         "skaterFields": SKATER_FIELDS,
         "goalieFields": GOALIE_FIELDS,
         "teams": teams,

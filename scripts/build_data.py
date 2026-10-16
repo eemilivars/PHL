@@ -14,7 +14,7 @@ Sources
   site/roster.json             the players whose game-by-game history is stored
 
 Output: site/data.json (schema documented in README.md, "data.json" section)
-Requests per run: about 110 (32 rosters, 3 schedule weeks, ~30 league stats reports,
+Requests per run: about 140 (32 rosters, ~30 schedule weeks, ~30 league stats reports,
 about 3 per rostered skater and 1 per rostered goalie for history)
 
 Exit code is non-zero if validation fails. The GitHub Action then stops before
@@ -212,10 +212,14 @@ def rosters_block(abbrevs):
     return out
 
 
-def schedule_block(start, days=21):
+def schedule_block(start, end):
+    """Every regular-season game from start to end, one request per week.
+
+    The whole season is kept so the page can total remaining games per team and project the
+    next 7 days, the next 14 days and the rest of the season."""
     games = {}
     d = start
-    while d < start + dt.timedelta(days=days):
+    while d <= end:
         data = get(f"{WEB}/schedule/{d.isoformat()}")
         for day in data.get("gameWeek", []):
             for g in day.get("games", []):
@@ -238,6 +242,21 @@ def schedule_block(start, days=21):
 WINDOWS = {"r7": 7, "rec": 14, "r30": 30}
 
 
+def last_n_blocks(sk_rows, gl_rows, n):
+    """Totals over each player's own last n games (from the per-game rows already downloaded).
+
+    A player who has played fewer than n games in the 30-day pull simply has fewer games."""
+    sk_dates, gl_dates = {}, {}
+    for r in sk_rows["summary"]:
+        sk_dates.setdefault(r["playerId"], set()).add(row_date(r))
+    for r in gl_rows:
+        gl_dates.setdefault(r["playerId"], set()).add(row_date(r))
+    sk_top = {pid: set(sorted(ds, reverse=True)[:n]) for pid, ds in sk_dates.items()}
+    gl_top = {pid: set(sorted(ds, reverse=True)[:n]) for pid, ds in gl_dates.items()}
+    return (fold_skaters(sk_rows, lambda r: row_date(r) in sk_top.get(r["playerId"], ())),
+            fold_goalies(gl_rows, lambda r: row_date(r) in gl_top.get(r["playerId"], ())))
+
+
 def window_blocks(today):
     """Per-player totals over the last N days for every window in WINDOWS.
 
@@ -250,6 +269,7 @@ def window_blocks(today):
     hi = today - dt.timedelta(days=1)
     meta = {k: [(today - dt.timedelta(days=n)).isoformat(), hi.isoformat()] for k, n in WINDOWS.items()}
     out = {k: ({}, {}) for k in WINDOWS}
+    last = {}
     lo_all = today - dt.timedelta(days=max(WINDOWS.values()))
     cayenne = f'gameDate<="{hi} 23:59:59" and gameDate>="{lo_all}" and gameTypeId=2'
 
@@ -270,7 +290,12 @@ def window_blocks(today):
             def keep(r, lo_s=lo_s, hi_s=hi_s):
                 return lo_s <= row_date(r) <= hi_s
             out[key] = (fold_skaters(sk_rows, keep), fold_goalies(gl_rows, keep))
+        last = {"l10": last_n_blocks(sk_rows, gl_rows, 10), "l3": last_n_blocks(sk_rows, gl_rows, 3)}
+        print(f"Last 10 games: {len(last['l10'][0])} skaters, {len(last['l10'][1])} goalies. "
+              f"Last 3 games: {len(last['l3'][0])} skaters, {len(last['l3'][1])} goalies", flush=True)
     else:
+        warn("last-10 and last-3 game rates unavailable (no per-game rows from the NHL); the page uses the 14-day "
+             "and 7-day windows in their place")
         for key, days in WINDOWS.items():
             lo_s, hi_s = meta[key]
             cay = f'gameDate<="{hi_s} 23:59:59" and gameDate>="{lo_s}" and gameTypeId=2'
@@ -295,7 +320,7 @@ def window_blocks(today):
               f"most games {most}", flush=True)
         if not sk:
             warn(f"{days}-day window has no skater data; the site greys it out")
-    return out, meta
+    return out, meta, last
 
 
 # ---------------------------------------------------------------------------
@@ -437,12 +462,16 @@ def build(now_utc):
 
     # Last 7 / 14 / 30 days, league-wide. A window that fails is left empty and the site greys it
     # out. "rec" (14 days) also feeds the projection model's recent-form weight.
-    win, win_meta = window_blocks(today)
+    win, win_meta, last = window_blocks(today)
     (sk_r7, gl_r7), (sk_rec, gl_rec), (sk_r30, gl_r30) = win["r7"], win["rec"], win["r30"]
+    (sk_l10, gl_l10), (sk_l3, gl_l3) = last.get("l10", ({}, {})), last.get("l3", ({}, {}))
     lo, hi = win_meta["rec"]
 
     monday = today - dt.timedelta(days=today.weekday())
-    schedule = schedule_block(min(monday, today - dt.timedelta(days=1)), days=21)
+    season_end = dt.date(int(cur[4:]), 4, 30)  # regular season ends in mid April
+    schedule = schedule_block(min(monday, today - dt.timedelta(days=1)), season_end)
+    print(f"Schedule: {len(schedule)} regular-season games from {schedule[0]['d'] if schedule else '-'} "
+          f"to {schedule[-1]['d'] if schedule else '-'}", flush=True)
 
     history = history_block(roster_ids(), cur, today, rosters, sk_cur, gl_cur, gl_prev)
 
@@ -468,6 +497,7 @@ def build(now_utc):
             "id": pid, "n": name, "t": team_of(pid, sk_cur, sk_prev), "p": pos,
             "cur": pack(c, SKATER_FIELDS), "prev": pack(pv, SKATER_FIELDS), "rec": pack(rc, SKATER_FIELDS),
             "r7": pack(sk_r7.get(pid), SKATER_FIELDS), "r30": pack(sk_r30.get(pid), SKATER_FIELDS),
+            "l10": pack(sk_l10.get(pid), SKATER_FIELDS), "l3": pack(sk_l3.get(pid), SKATER_FIELDS),
         })
     goalie_ids = set(gl_cur) | {p for p, v in gl_prev.items() if v["gp"] >= 3} | \
         {p for p, v in rosters.items() if v["pos"] == "G"}
@@ -480,6 +510,7 @@ def build(now_utc):
             "id": pid, "n": name, "t": team_of(pid, gl_cur, gl_prev),
             "cur": pack(c, GOALIE_FIELDS), "prev": pack(pv, GOALIE_FIELDS), "rec": pack(rc, GOALIE_FIELDS),
             "r7": pack(gl_r7.get(pid), GOALIE_FIELDS), "r30": pack(gl_r30.get(pid), GOALIE_FIELDS),
+            "l10": pack(gl_l10.get(pid), GOALIE_FIELDS), "l3": pack(gl_l3.get(pid), GOALIE_FIELDS),
         })
 
     return {
@@ -489,6 +520,7 @@ def build(now_utc):
         "prevSeason": prev,
         "recentWindow": [lo, hi],
         "windows": win_meta,          # {"r7": [from, to], "rec": [...], "r30": [...]}
+        "lastGames": bool(last),      # false if per-game rows were unavailable (no l10 / l3 arrays)
         "skaterFields": SKATER_FIELDS,
         "goalieFields": GOALIE_FIELDS,
         "teams": teams,
@@ -511,7 +543,7 @@ def validate(data):
     if prev_sk < 500:
         errors.append(f"only {prev_sk} skaters with previous-season stats (expected 500+)")
     if in_season and not data["games"]:
-        errors.append("no regular-season games in the 3-week schedule window")
+        errors.append("no regular-season games in the schedule")
     after_opening = today >= dt.date(today.year if today.month >= 10 else today.year - 1, 10, 20)
     if in_season and after_opening and sum(1 for s in data["skaters"] if s["cur"]) < 300:
         errors.append("fewer than 300 skaters with current-season stats after 20 Oct")

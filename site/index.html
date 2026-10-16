@@ -71,10 +71,10 @@ main { max-width: 1280px; margin: 0 auto; padding: 20px; }
 
 .group { margin-top: 14px; }
 .group-head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
-.row { display: grid; grid-template-columns: 70px minmax(0, 1fr) 130px 90px 60px; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.row { display: grid; grid-template-columns: 70px minmax(0, 1fr) 130px 86px; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
 .row:last-child { border-bottom: 0; }
 .row.bench { color: var(--muted); }
-@media (max-width: 640px) { .row { grid-template-columns: 62px minmax(0, 1fr) 84px 52px; } .row .why { display: none; } }
+@media (max-width: 640px) { .row { grid-template-columns: 56px minmax(0, 1fr) 76px 74px; gap: 6px; } }
 .slot { font-family: var(--display); font-weight: 700; font-size: 14px; border-radius: 5px; padding: 2px 6px; text-align: center; }
 .slot.start { background: var(--navy); color: #fff; }
 .slot.benchl { border: 1px solid var(--line); color: var(--muted); }
@@ -131,7 +131,7 @@ tfoot td { font-weight: 600; }
 .results div:first-child { border-top: 0; }
 .alert { padding: 10px 12px; border-radius: 8px; background: var(--red-soft); font-size: 14px; }
 .note { padding: 10px 12px; border-radius: 8px; background: var(--amber-soft); font-size: 13.5px; }
-dialog { border: 1px solid var(--line); border-radius: 12px; padding: 0; width: min(620px, calc(100vw - 24px)); background: var(--surface); color: var(--ink); }
+dialog { border: 1px solid var(--line); border-radius: 12px; padding: 0; width: min(700px, calc(100vw - 24px)); max-height: calc(100vh - 24px); background: var(--surface); color: var(--ink); }
 dialog::backdrop { background: rgba(10, 22, 40, .55); }
 .dlg-head { padding: 14px 18px 10px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 10px; }
 .dlg-body { padding: 12px 18px 18px; display: grid; gap: 14px; }
@@ -187,6 +187,69 @@ table.heat tfoot td { border-top: 2px solid var(--line); }
 .mini circle { fill: var(--blue); stroke: var(--surface); stroke-width: 1; }
 .mini circle.dim { fill: transparent; stroke: none; }
 .mini .hint { margin: 10px 0 6px; }
+
+/* value breakdown, compare, player card */
+#cmpDlg { width: min(1000px, calc(100vw - 24px)); }
+.drivers { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+.drv { font-size: 11.5px; padding: 0 6px; border-radius: 4px; font-variant-numeric: tabular-nums; }
+.drv.pos { background: var(--green-soft); color: var(--green); }
+.drv.neg { background: var(--red-soft); color: var(--red); }
+.valcell { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.valbtn { background: none; border: 0; padding: 0; cursor: pointer; font-family: var(--display); font-weight: 600; font-size: 19px; color: var(--ink); text-decoration: underline dotted var(--muted); text-underline-offset: 4px; }
+.valbtn:hover { color: var(--blue); }
+.cmpbtn { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; font-size: 11.5px; padding: 1px 7px; cursor: pointer; color: var(--muted); }
+.cmpbtn[aria-pressed="true"] { background: var(--blue-soft); color: var(--blue); border-color: var(--blue); }
+.cmpbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; padding: 8px 10px; border-radius: 8px; background: var(--blue-soft); font-size: 13.5px; }
+.cutline { font-size: 13px; color: var(--muted); margin: 6px 0 2px; }
+.cutline.close { color: var(--amber); }
+.gain { font-size: 12px; font-weight: 600; color: var(--green); white-space: nowrap; }
+.gain.close { color: var(--amber); }
+.change { grid-template-columns: auto 1fr auto 1fr auto; }
+@media (max-width: 640px) { .change { grid-template-columns: auto 1fr; } }
+.bigval { display: flex; align-items: baseline; gap: 10px; }
+.bigval .num { font-family: var(--display); font-size: 42px; font-weight: 700; line-height: 1; }
+.lines p { margin: 0 0 6px; font-size: 13.5px; }
+.how p { margin: 4px 0; font-size: 13px; color: var(--muted); }
+table.why td, table.why th { font-size: 13px; }
+.zpos { color: var(--green); } .zneg { color: var(--red); }
+.chipx { display: inline-flex; align-items: center; gap: 2px; }
+.chipx .x { border: 0; background: none; cursor: pointer; color: var(--muted); font-size: 16px; line-height: 1; padding: 0 4px; }
+.lg i.g-F { background: var(--blue); } .lg i.g-D { background: #E07B00; } .lg i.g-G { background: var(--green); }
+.lg i.hollow { background: transparent !important; border: 2px solid var(--muted); }
+.rk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; margin-top: 8px; }
+.rk { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: var(--surface); min-width: 0; }
+.rk h4 { margin: 0 0 6px; font-family: var(--display); font-size: 17px; font-weight: 600; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.rk-row { display: grid; grid-template-columns: minmax(64px, 104px) 1fr 44px; gap: 6px; align-items: center; font-size: 12.5px; padding: 1px 0; }
+.rk-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rk-track { position: relative; height: 12px; background: var(--bar); border-radius: 3px; overflow: hidden; }
+.rk-fill { position: absolute; top: 0; bottom: 0; border-radius: 2px; }
+.rk-fill.F { background: var(--blue); } .rk-fill.D { background: #E07B00; } .rk-fill.G { background: var(--green); }
+.rk-fill.X { background: repeating-linear-gradient(45deg, var(--muted), var(--muted) 3px, var(--bar) 3px, var(--bar) 6px); }
+.rk-zero { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--ink); opacity: .5; }
+.rk-val { text-align: right; font-weight: 600; }
+.rk-val.top { color: var(--green); }
+.best { display: inline-block; background: var(--green-soft); color: var(--green); border-radius: 999px; padding: 1px 10px; font-weight: 700; }
+table.cmp { min-width: 420px; }
+table.cmp th, table.cmp td { text-align: center; vertical-align: top; }
+table.cmp th[scope="row"], table.cmp thead th:first-child { text-align: left; position: sticky; left: 0; background: var(--surface); color: var(--muted); font-weight: 600; }
+table.cmp thead th { color: var(--ink); min-width: 110px; }
+table.cmp .valbtn { font-size: 15px; }
+.gauges { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.gauge svg { width: 100%; height: auto; display: block; }
+.gauge .gt, .gauge .gf { fill: none; stroke-width: 9; stroke-linecap: round; }
+.gauge .gt { stroke: var(--bar); }
+.gauge text { text-anchor: middle; font-family: var(--body); }
+.gauge .gv { font-family: var(--display); font-weight: 700; font-size: 26px; fill: var(--ink); }
+.gauge .gl { font-size: 12px; font-weight: 600; }
+.gauge .gs { font-size: 10.5px; fill: var(--muted); }
+.strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 8px; margin-top: 6px; font-size: 12px; color: var(--muted); }
+.strip > div { text-align: center; }
+.strip b { display: block; font-family: var(--display); font-size: 20px; font-weight: 600; color: var(--ink); }
+.strip .pb { display: block; height: 4px; background: var(--bar); border-radius: 2px; margin: 3px 4px 0; overflow: hidden; }
+.strip .pb i { display: block; height: 100%; background: var(--blue); }
+.trend svg { width: 100%; max-width: 460px; height: auto; display: block; }
+.trend text { fill: var(--muted); font-family: var(--body); font-size: 9.5px; }
+.trend .gl2 { stroke: var(--line); stroke-width: 1; }
 [hidden] { display: none !important; }
 </style>
 </head>
@@ -208,6 +271,7 @@ table.heat tfoot td { border-top: 2px solid var(--line); }
 
 <main>
   <div id="loadError" class="alert" hidden></div>
+  <div id="rosterBanner" class="note" hidden></div>
 
   <section data-view="lineup" class="stack">
     <div class="days" id="days" aria-label="Game day (Eastern Time)"></div>
@@ -223,7 +287,8 @@ table.heat tfoot td { border-top: 2px solid var(--line); }
         <div class="panel">
           <h3>Reading the grades</h3>
           <p class="hint">Matchup grade compares the opponent with an average NHL team: for skaters, goals and shots they allow; for goalies, win chance and how many goals the opponent scores. B2B means the team also played yesterday.</p>
-          <p class="hint">Value is the projected contribution to your weighted categories in this one game: each category's gap to an average fantasy starter, in standard deviations, summed. Above 0 beats an average starter. Change the weights on the Categories tab.</p>
+          <p class="hint"><b>Value</b> is the projected contribution to your weighted categories in this one game: each category's gap to an average fantasy starter, in standard deviations, times your weight, summed. 0 is an average starter; 5 is about five standard deviations better. Click any value to see the category-by-category working.</p>
+          <p class="hint">The coloured chips under a name are the three biggest contributions (for example SOG +1.4). <b>Toss-up</b> marks the last starter and the first bench option when they are less than 1.0 apart: in those cases form, injury news and confirmed goalies should decide. <b>Compare</b> puts two or more players side by side for the day.</p>
         </div>
       </div>
     </div>
@@ -243,19 +308,19 @@ table.heat tfoot td { border-top: 2px solid var(--line); }
   <section data-view="cats" class="stack" hidden>
     <div class="panel">
       <div class="panel-head">
-        <h2>Recent form</h2>
-        <div class="seg" id="formMode" role="group" aria-label="What to compare">
-          <button data-fmode="windows" aria-pressed="true">By time window</button>
-          <button data-fmode="entities" aria-pressed="false">Forwards, defensemen and players</button>
+        <h2>Recent form and player comparison</h2>
+        <div class="seg" id="formMode" role="group" aria-label="What to do">
+          <button data-fmode="compare" aria-pressed="true">Compare players</button>
+          <button data-fmode="windows" aria-pressed="false">Over time</button>
         </div>
       </div>
       <p class="hint" id="formHint"></p>
       <div id="formControls"></div>
-      <div id="formSkChart" class="chart"></div>
-      <div id="formGChart" class="chart"></div>
-      <h3 id="formTotalsHead" style="margin-top:16px">Totals</h3>
-      <p class="hint">Raw totals of the selected players, whether or not they were in your active lineup.</p>
-      <div class="table-wrap" id="formTotals" style="margin-top:6px"></div>
+      <div id="cmpSearchWrap" class="search" hidden>
+        <input id="cmpAdd" type="search" placeholder="Add any NHL player to the comparison, such as a free agent" autocomplete="off" aria-label="Add an NHL player to compare">
+        <div class="results" id="cmpAddResults" hidden></div>
+      </div>
+      <div id="formBody"></div>
     </div>
     <div class="panel">
       <div class="panel-head">
@@ -347,6 +412,8 @@ table.heat tfoot td { border-top: 2px solid var(--line); }
 </footer>
 
 <dialog id="dlg" aria-labelledby="dlgTitle"></dialog>
+<dialog id="whyDlg" aria-labelledby="whyTitle"></dialog>
+<dialog id="cmpDlg" aria-labelledby="cmpTitle"></dialog>
 
 <script>
 'use strict';
@@ -354,7 +421,10 @@ const SLOTS = { F: 6, D: 4, G: 2 };
 const SK = [['G', 'g'], ['A', 'a'], ['+/-', 'pm'], ['PPP', 'ppp'], ['GWG', 'gwg'], ['SOG', 'sog'], ['FW', 'fw'], ['HIT', 'hit'], ['BLK', 'blk']];
 const GC = [['W', 'w'], ['SV', 'sv'], ['SV%', 'svp'], ['SHO', 'so']];
 const ALLC = SK.concat(GC);
-const LS_ROSTER = 'phl-roster-v1', LS_W = 'phl-weights-v1';
+// How a player's expected per-game rate is built. A part that does not exist for a player (no projection,
+// no last season, no recent games) is dropped and the remaining weights are rescaled to add up to 100%.
+const RATE_W = { proj: 0.70, prev: 0.10, l10: 0.10, l3: 0.10 };
+const LS_ROSTER = 'phl-roster-v1', LS_W = 'phl-weights-v1', LS_DISMISS = 'phl-roster-dismissed-v1';
 
 let D = null;           // data.json
 let P = new Map();      // id -> player model
@@ -364,7 +434,10 @@ let GAMES_BY_DAY = new Map(), PLAYED = new Set();
 let LIST_POOL = []; // skaters with a usable sample and an NHL team
 let roster = [];        // [{id, status, active}]
 let W = {};
-let ui = { tab: 'lineup', day: null, weekStart: null };
+let ui = { tab: 'lineup', day: null, weekStart: null, cmp: new Set(), cmpMetric: 'day' };
+let fileRoster = [];
+let PROJ = null; // projections.json (season projections per player)
+let SEASON_GAMES = 84;
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -376,7 +449,37 @@ const dayMonth = iso => new Date(iso + 'T12:00:00Z').toLocaleDateString('en-GB',
 const mondayOf = iso => { const d = new Date(iso + 'T12:00:00Z'); const k = (d.getUTCDay() + 6) % 7; return addDays(iso, -k); };
 const TODAY_OVERRIDE = new URLSearchParams(location.search).get('today'); // testing: ?today=YYYY-MM-DD
 const etToday = () => TODAY_OVERRIDE || new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
-const fmt = (v, d = 1) => v == null || isNaN(v) ? '–' : Number(v).toFixed(d);
+const negz = s => /^-0(\.0+)?$/.test(s) ? s.slice(1) : s; // no "-0.00"
+const fmt = (v, d = 1) => v == null || isNaN(v) ? '–' : negz(Number(v).toFixed(d));
+
+// ---------------------------------------------------------------- expected per-game rates
+const normName = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z ]/g, '').replace(/\s+/g, ' ').trim();
+function projIndex(list) {
+  const byId = new Map(), byName = new Map();
+  for (const x of list || []) {
+    if (x.id != null) byId.set(x.id, x);
+    else { const k = normName(x.n); byName.set(k, byName.has(k) ? null : x); } // null = ambiguous name
+  }
+  return { byId, byName };
+}
+const projFor = (p, idx) => idx.byId.get(p.id) || idx.byName.get(normName(p.name)) || null;
+// items: [[part, value|null], ...] -> weighted average over the parts that exist, plus the weights actually used
+function wBlend(items, fallback) {
+  const have = items.filter(([, v]) => v != null && !isNaN(v));
+  const tot = have.reduce((s, [k]) => s + RATE_W[k], 0);
+  if (!have.length || !tot) return { v: fallback, w: {}, vals: {} };
+  const w = {}, vals = {}; let v = 0;
+  for (const [k, x] of have) { w[k] = RATE_W[k] / tot; vals[k] = x; v += w[k] * x; }
+  return { v, w, vals };
+}
+const perGame = (o, k) => o && o.gp ? o[k] / o.gp : null;
+function seasonGames() {
+  const today = etToday(), n = {};
+  for (const g of D.games) if (g.d >= today) { n[g.h] = (n[g.h] || 0) + 1; n[g.a] = (n[g.a] || 0) + 1; }
+  const totals = Object.keys(TEAM).map(t => (TEAM[t].gp || 0) + (n[t] || 0)).sort((a, b) => a - b);
+  const med = totals[Math.floor(totals.length / 2)];
+  return med >= 80 && med <= 86 ? med : 84;
+}
 
 // ---------------------------------------------------------------- data prep
 function prep() {
@@ -402,7 +505,7 @@ function prep() {
   const cats = SK.map(c => c[1]);
   const sk = D.skaters.map(s => ({ id: s.id, name: s.n, team: s.t, pos: s.p, group: s.p === 'D' ? 'D' : 'F', kind: 'S',
     cur: obj(s.cur, D.skaterFields), prev: obj(s.prev, D.skaterFields), rec: obj(s.rec, D.skaterFields),
-    r7: obj(s.r7, D.skaterFields), r30: obj(s.r30, D.skaterFields) }));
+    r7: obj(s.r7, D.skaterFields), r30: obj(s.r30, D.skaterFields), l10: obj(s.l10, D.skaterFields), l3: obj(s.l3, D.skaterFields) }));
   const raw = p => { const gp = (p.cur?.gp || 0) + (p.prev?.gp || 0); if (gp < 20) return null;
     const o = {}; cats.forEach(k => o[k] = ((p.cur?.[k] || 0) + (p.prev?.[k] || 0)) / gp); return o; };
   const REPL = {};
@@ -411,14 +514,31 @@ function prep() {
       .sort((a, b) => (b.r.g + b.r.a) - (a.r.g + a.r.a)).slice(0, grp === 'F' ? 200 : 80);
     REPL[grp] = {}; cats.forEach(k => REPL[grp][k] = k === 'pm' ? -0.05 : 0.6 * pool.reduce((s, x) => s + x.r[k], 0) / pool.length);
   }
+  SEASON_GAMES = seasonGames();
+  const skIdx = projIndex(PROJ && PROJ.skaters), glIdx = projIndex(PROJ && PROJ.goalies);
+  let gwgG = 0, gwgN = 0;
+  for (const p of sk) if (p.prev && p.prev.gp >= 20) { gwgG += p.prev.g; gwgN += p.prev.gwg; }
+  const LG_GWG = gwgG ? gwgN / gwgG : 0.13; // share of goals that are game-winners
   for (const p of sk) {
     const r = {}, c = p.cur, v = p.prev;
-    cats.forEach(k => {
+    cats.forEach(k => { // legacy blend: used only for players the projections file does not cover
       const prior = v && v.gp ? (v[k] + 10 * REPL[p.group][k]) / (v.gp + 10) : REPL[p.group][k];
       r[k] = ((c ? c[k] : 0) + 15 * prior) / ((c ? c.gp : 0) + 15);
       if (p.rec && p.rec.gp >= 3) r[k] = 0.7 * r[k] + 0.3 * p.rec[k] / p.rec.gp;
     });
-    p.rate = r;
+    const pr = projFor(p, skIdx);
+    if (pr && pr.gp > 0) {
+      // the source does not project GWG: use projected goals x his share of goals that were game-winners (shrunk to the league share)
+      const gwgShare = p.prev ? (p.prev.gwg + 8 * LG_GWG) / (p.prev.g + 8) : LG_GWG;
+      const parts = {}, rate = {};
+      cats.forEach(k => {
+        const projRate = k === 'gwg' ? pr.g / pr.gp * gwgShare : pr[k] / pr.gp;
+        const b = wBlend([['proj', projRate], ['prev', p.prev && p.prev.gp >= 10 ? perGame(p.prev, k) : null],
+          ['l10', perGame(p.l10 || p.rec, k)], ['l3', perGame(p.l3 || p.r7, k)]], r[k]);
+        rate[k] = b.v; parts[k] = b;
+      });
+      p.rate = rate; p.rateParts = parts; p.projected = true;
+    } else { p.rate = r; p.projected = false; }
     P.set(p.id, p);
   }
   // normalisation pool: fantasy-relevant skaters (about 10 teams x 14 skaters, plus depth)
@@ -433,7 +553,7 @@ function prep() {
   for (const s of D.goalies) {
     const p = { id: s.id, name: s.n, team: s.t, pos: 'G', group: 'G', kind: 'G',
       cur: obj(s.cur, D.goalieFields), prev: obj(s.prev, D.goalieFields), rec: obj(s.rec, D.goalieFields),
-      r7: obj(s.r7, D.goalieFields), r30: obj(s.r30, D.goalieFields) };
+      r7: obj(s.r7, D.goalieFields), r30: obj(s.r30, D.goalieFields), l10: obj(s.l10, D.goalieFields), l3: obj(s.l3, D.goalieFields) };
     const c = p.cur || { gp: 0, gs: 0, w: 0, sv: 0, sa: 0, so: 0 }, v = p.prev;
     const pw = v && v.gs ? (v.w + 4 * 0.45) / (v.gs + 4) : 0.42;
     const psv = v && v.sa ? (v.sv + 250 * 0.895) / (v.sa + 250) : 0.893;
@@ -446,6 +566,25 @@ function prep() {
       sops: (c.so + 8 * pso) / (c.gs + 8),
       share: clamp((c.gs + 10 * pshare) / (teamGp + 10), 0.05, 0.85),
     };
+    const gp0 = projFor(p, glIdx);
+    if (gp0 && gp0.gs > 0) {
+      const perStart = (o, k) => o && o.gs ? o[k] / o.gs : null, sv = o => o && o.sa ? o.sv / o.sa : null;
+      const l10 = p.l10 || p.rec, l3 = p.l3 || p.r7, okPrev = v && v.gs >= 5;
+      const wps = wBlend([['proj', gp0.w / gp0.gs], ['prev', okPrev ? perStart(v, 'w') : null], ['l10', perStart(l10, 'w')], ['l3', perStart(l3, 'w')]], p.rate.wps);
+      const svp = wBlend([['proj', gp0.svp], ['prev', okPrev ? sv(v) : null], ['l10', sv(l10)], ['l3', sv(l3)]], p.rate.svp);
+      const sops = wBlend([['proj', gp0.so / gp0.gs], ['prev', okPrev ? perStart(v, 'so') : null], ['l10', perStart(l10, 'so')], ['l3', perStart(l3, 'so')]], p.rate.sops);
+      // start share: projected starts / season length, last season's share, and his share of this season's team games
+      // (that actual share takes the place of the two "recent games" parts)
+      const cur = teamGp >= 3 && p.cur ? p.cur.gs / teamGp : null, shareB = (() => {
+        const items = [['proj', gp0.gs / SEASON_GAMES], ['prev', okPrev ? v.gs / 82 : null]], have = items.filter(([, x]) => x != null);
+        const wCur = cur != null ? RATE_W.l10 + RATE_W.l3 : 0, tot = have.reduce((s, [k]) => s + RATE_W[k], 0) + wCur;
+        const val = (have.reduce((s, [k, x]) => s + RATE_W[k] * x, 0) + (cur != null ? wCur * cur : 0)) / tot;
+        const w = {}; have.forEach(([k]) => w[k] = RATE_W[k] / tot); if (cur != null) w.cur = wCur / tot;
+        return { v: clamp(val, 0.05, 0.85), w, vals: { proj: gp0.gs / SEASON_GAMES, prev: okPrev ? v.gs / 82 : undefined, cur: cur ?? undefined } };
+      })();
+      p.rate = { wps: wps.v, svp: svp.v, sops: sops.v, share: shareB.v };
+      p.rateParts = { wps, svp, sops, share: shareB }; p.projected = true;
+    } else p.projected = false;
     P.set(p.id, p);
   }
   const gpool = [...P.values()].filter(p => p.kind === 'G').sort((a, b) => b.rate.share - a.rate.share).slice(0, 40);
@@ -471,7 +610,7 @@ function skaterExp(p, ctx) {
   const adj = (ctx.home ? 1.02 : 0.985) * (ctx.oppB2B ? 1.04 : 1) * (ctx.myB2B ? 0.97 : 1);
   const fo = Math.pow(O.ga / LG.ga, 0.7) * adj, fs = Math.pow(O.sa / LG.sa, 0.7) * adj, fb = Math.pow(O.sf / LG.sf, 0.6);
   return { g: r.g * fo, a: r.a * fo, ppp: r.ppp * fo, gwg: r.gwg * fo, sog: r.sog * fs, fw: r.fw, hit: r.hit, blk: r.blk * fb,
-    pm: r.pm + 0.25 * ((O.ga - LG.ga) - (O.gf - LG.gf)), _fo: fo };
+    pm: r.pm + 0.25 * ((O.ga - LG.ga) - (O.gf - LG.gf)), _fo: fo, _fs: fs, _fb: fb, _adj: adj };
 }
 function goalieExp(p, ctx) {
   const r = p.rate;
@@ -513,16 +652,99 @@ function form(p) {
   return null;
 }
 
+// ---------------------------------------------------------------- value breakdown
+const fmtS = (v, d = 1) => { if (v == null || isNaN(v)) return '–'; const s = negz(Number(v).toFixed(d)); return (Number(s) > 0 ? '+' : '') + s; };
+const CLOSE_CALL = 1.0; // value gap below which the last starter and the best bench option are a toss-up
+
+// Same maths as value(), but keeps every step so the page can show where a number comes from.
+function valueParts(p, ctx) {
+  const rows = [];
+  if (p.kind === 'G') {
+    const e = goalieExp(p, ctx);
+    [['W', 'w', 1], ['SV', 'sv', 1], ['SV%', 'svp', e.pStart], ['SHO', 'so', 1]].forEach(([lab, k, mult]) => {
+      const n = GNORM[k], z = (e[k] - n.mu) / n.sd;
+      rows.push({ lab, k, exp: e[k], mu: n.mu, sd: n.sd, z, w: W[lab], mult, c: W[lab] * mult * z });
+    });
+    return { rows, total: rows.reduce((s, r) => s + r.c, 0), e };
+  }
+  const e = skaterExp(p, ctx);
+  SK.forEach(([lab, k]) => {
+    const n = NORM[k], z = (e[k] - n.mu) / n.sd;
+    rows.push({ lab, k, exp: e[k], mu: n.mu, sd: n.sd, z, w: W[lab], mult: 1, c: W[lab] * z });
+  });
+  return { rows, total: rows.reduce((s, r) => s + r.c, 0), e };
+}
+function driversHtml(p, ctx) {
+  if (!ctx) return '';
+  const top = valueParts(p, ctx).rows.filter(r => Math.abs(r.c) >= 0.15).sort((a, b) => Math.abs(b.c) - Math.abs(a.c)).slice(0, 3);
+  return top.map(r => `<span class="drv ${r.c >= 0 ? 'pos' : 'neg'}" title="${esc(r.lab)} adds ${fmtS(r.c, 2)} to this player's value">${esc(r.lab)} ${fmtS(r.c)}</span>`).join('');
+}
+const RLAB = { proj: 'projection', prev: 'last season', l10: 'last 10 games', l3: 'last 3 games' };
+function recipeText(p) {
+  if (!p.projected) return PROJ ? 'a blend of this season and last season, because the projections file has no entry for him' : 'a blend of this season and last season, because projections.json was not found';
+  const first = p.kind === 'S' ? p.rateParts.g : p.rateParts.wps;
+  return Object.entries(first.w).map(([k, w]) => `${Math.round(w * 100)}% ${RLAB[k]}`).join(', ');
+}
+function ratesCard(p) {
+  const fmtR = (k, v) => v == null ? '–' : k === 'svp' ? v.toFixed(3).replace(/^0/, '') : v.toFixed(2);
+  const gk = p.kind === 'G';
+  const cats = gk ? [['Wins per start', 'wps'], ['Save %', 'svp'], ['Shutouts per start', 'sops'], ['Start share', 'share']] : SK;
+  const head = `<h3>Expected per game</h3>`;
+  if (!p.projected) {
+    return `<div>${head}<p class="hint">${gk ? `Start share ${Math.round(p.rate.share * 100)}%, wins per start ${fmt(p.rate.wps, 2)}, save % ${p.rate.svp.toFixed(3).replace(/^0/, '')}, shutouts per start ${fmt(p.rate.sops, 2)}` : SK.map(([lab, k]) => `${lab} ${fmt(p.rate[k], 2)}`).join(', ')}. Built from ${recipeText(p)}.</p></div>`;
+  }
+  const rows = cats.map(([lab, k]) => { const b = p.rateParts[k], x = b.vals || {};
+    return `<tr><td>${esc(lab)}</td><td class="r num">${fmtR(k, x.proj)}</td><td class="r num">${fmtR(k, x.prev)}</td><td class="r num">${fmtR(k, gk && k === 'share' ? x.cur : x.l10)}</td><td class="r num">${gk && k === 'share' ? '' : fmtR(k, x.l3)}</td><td class="r num"><b>${fmtR(k, b.v)}</b></td></tr>`; }).join('');
+  return `<div>${head}<p class="hint">Built from <b>${recipeText(p)}</b>. A part he does not have (for example no games yet) is dropped and the others are rescaled.</p>
+    <details><summary>Show the numbers behind each category</summary><div class="table-wrap"><table><thead><tr><th>Per game</th><th class="r">Projection</th><th class="r">Last season</th><th class="r">Last 10</th><th class="r">Last 3</th><th class="r">Used</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <p class="hint">${gk ? 'Start share uses his share of this season\'s team games (in the Last 10 column) in place of both recent parts. ' : p.rateParts.gwg ? 'GWG is derived: projected goals times his share of goals that were game-winners. ' : ''}Last 10 and last 3 are his own most recent games, not calendar windows.</p></details></div>`;
+}
+
+function openWhy(id, day) {
+  const p = P.get(Number(id)); if (!p) return;
+  const r = roster.find(x => x.id === p.id);
+  const ctx = p.team ? ctxFor(p.team, day) : null;
+  const head = t => `<div class="dlg-head"><div><h2 id="whyTitle">${esc(p.name)}</h2><div class="meta">${t}</div></div><button class="btn small" data-close>Close</button></div>`;
+  if (!ctx) { $('whyDlg').innerHTML = head(`${esc(p.team || 'No NHL team')}, no game on ${weekday(day)} ${dayMonth(day)}`) + '<div class="dlg-body"><p class="hint">No game that day, so there is no value to explain.</p></div>'; $('whyDlg').showModal(); return; }
+  const vp = valueParts(p, ctx), e = vp.e, O = TEAM[ctx.opp] || LG, M = TEAM[p.team] || LG;
+  const lines = [];
+  if (p.kind === 'S') {
+    lines.push(`${ctx.home ? 'Home against' : 'Away at'} <b>${esc(ctx.opp)}</b> on ${weekday(day)} ${dayMonth(day)}.`);
+    lines.push(`${esc(ctx.opp)} allow ${fmt(O.ga, 2)} goals and ${fmt(O.sa, 1)} shots per game (league: ${fmt(LG.ga, 2)} and ${fmt(LG.sa, 1)}). Scoring categories are scaled by <b>×${fmt(e._fo, 2)}</b>, shots by <b>×${fmt(e._fs, 2)}</b>. Blocks follow the shots they take (${fmt(O.sf, 1)} per game, league ${fmt(LG.sf, 1)}): <b>×${fmt(e._fb, 2)}</b>.`);
+    lines.push(`Those factors already include home ice (+2%, away −1.5%)${ctx.myB2B ? ', your team playing yesterday (−3%)' : ''}${ctx.oppB2B ? ', the opponent playing yesterday (+4%)' : ''}. Hits and faceoffs are not opponent-adjusted.`);
+    lines.push(`His per-game rates are ${recipeText(p)} (the numbers are on his card).`);
+  } else {
+    lines.push(`${ctx.home ? 'Home against' : 'Away at'} <b>${esc(ctx.opp)}</b> on ${weekday(day)} ${dayMonth(day)}.`);
+    lines.push(`Start chance <b>${Math.round(e.pStart * 100)}%</b>: his usual share of starts (${Math.round(p.rate.share * 100)}%)${ctx.myB2B ? ', adjusted for the second night of a back-to-back' : ''}. Win chance if he starts: <b>${Math.round(e.pWin * 100)}%</b>, from the gap in points percentage between ${esc(p.team)} and ${esc(ctx.opp)}, home ice, rest and his save percentage.`);
+    lines.push(`${esc(ctx.opp)} take ${fmt(O.sf, 1)} shots per game (league ${fmt(LG.sf, 1)}), which drives expected saves. Every goalie category except save % is multiplied by the start chance.`);
+  }
+  if (r && r.status === 'DTD') lines.push(`Listed day-to-day, so he is ranked <b>1.5 lower</b> than this when choosing starters.`);
+  const tr = vp.rows.map(x => `<tr><td>${esc(x.lab)}</td><td class="r num">${fmt(x.exp, x.k === 'svp' ? 3 : 2)}</td><td class="r num">${fmt(x.mu, x.k === 'svp' ? 3 : 2)}</td>
+      <td class="r num ${x.z >= 0 ? 'zpos' : 'zneg'}">${fmtS(x.z, 2)}</td><td class="r num">${x.mult !== 1 ? `${x.w.toFixed(1)} × ${Math.round(x.mult * 100)}%` : x.w.toFixed(1)}</td>
+      <td class="r num"><b class="${x.c >= 0 ? 'zpos' : 'zneg'}">${fmtS(x.c, 2)}</b></td></tr>`).join('');
+  $('whyDlg').innerHTML = head(`${esc(p.team)} ${esc(p.pos)}, value on ${weekday(day)} ${dayMonth(day)}`) + `<div class="dlg-body">
+    <div class="bigval"><span class="num">${fmtS(vp.total, 1)}</span><span class="meta">value for this game. 0 is an average fantasy starter.</span></div>
+    <div class="lines">${lines.map(l => `<p>${l}</p>`).join('')}</div>
+    <div class="table-wrap"><table class="why"><thead><tr><th>Category</th><th class="r">Projected</th><th class="r">Average starter</th><th class="r">Gap (SD)</th><th class="r">Weight</th><th class="r">Adds</th></tr></thead>
+      <tbody>${tr}</tbody><tfoot><tr><td colspan="5">Value (sum of Adds)</td><td class="r num"><b>${fmtS(vp.total, 2)}</b></td></tr></tfoot></table></div>
+    <div class="how"><h3>How to read it</h3>
+      <p><b>Projected</b> is what the model expects from him in this one game. <b>Average starter</b> is the typical per-game rate among about ${p.kind === 'S' ? '190 skaters' : '40 goalies'} that a 10-team league rosters.</p>
+      <p><b>Gap (SD)</b> is the difference measured in standard deviations: how many "typical differences between starters" he is above or below average. That puts goals, hits and saves on the same scale so they can be added.</p>
+      <p><b>Adds</b> is Gap × Weight (the sliders on the Categories tab). Value is the sum. Two players are comparable only on the same day; a value of 5 means about 5 standard deviations better than an average starter across your categories together.</p></div>
+    <div><button class="btn small" data-open="${p.id}">Open player card</button></div></div>`;
+  if (!$('whyDlg').open) $('whyDlg').showModal();
+}
+
 // ---------------------------------------------------------------- lineup
 function rosterPlayers() { return roster.map(r => ({ r, p: P.get(r.id) })).filter(x => x.p); }
 
 function lineupFor(day) {
-  const out = {};
+  const out = { cuts: {} };
   for (const grp of ['F', 'D', 'G']) {
     const rows = rosterPlayers().filter(x => x.p.group === grp).map(({ r, p }) => {
       const ctx = p.team ? ctxFor(p.team, day) : null;
       const unavailable = r.status === 'Out' || r.status === 'IR';
-      let v = ctx ? value(p, ctx) : null;
+      const v = ctx ? value(p, ctx) : null;
       const rankV = v == null ? null : v - (r.status === 'DTD' ? 1.5 : 0);
       return { r, p, ctx, v, rankV, unavailable };
     });
@@ -532,6 +754,12 @@ function lineupFor(day) {
       x.start = starters.has(x.p.id);
       x.reason = x.start ? '' : x.unavailable ? (x.r.status === 'IR' ? 'On IR' : 'Out') : !x.ctx ? 'No game' : 'Lower projection';
     });
+    const last = eligible[SLOTS[grp] - 1], next = eligible[SLOTS[grp]];
+    if (last && next) {
+      const gap = last.rankV - next.rankV;
+      out.cuts[grp] = { last, next, gap };
+      if (gap < CLOSE_CALL) { last.close = true; next.close = true; }
+    }
     rows.sort((a, b) => (b.start - a.start) || ((b.rankV ?? -99) - (a.rankV ?? -99)));
     out[grp] = rows;
   }
@@ -547,7 +775,8 @@ function changesFor(lu) {
     const toOut = rows.filter(x => !x.start && x.r.active).sort((a, b) => b.unavailable - a.unavailable);
     for (let i = 0; i < Math.max(toIn.length, toOut.length); i++) {
       if (!toIn[i] && !toOut[i].unavailable) continue;
-      pairs.push({ grp, inn: toIn[i], out: toOut[i] });
+      const a = toIn[i], b = toOut[i];
+      pairs.push({ grp, inn: a, out: b, gain: a && b && a.v != null && b.v != null ? a.v - b.v : null });
     }
   }
   return pairs;
@@ -589,22 +818,32 @@ function renderLineup() {
   else if (!ch.length) top = `<div class="ok">Your saved lineup already matches the best lineup for this day.</div>`;
   else top = `<div class="changes">${ch.map(c => `<div class="change">
       <span class="in">Start</span><span>${c.inn ? `${esc(c.inn.p.name)}<small>${oppHtml(c.inn.ctx)}, value ${fmt(c.inn.v)}</small>` : '<small>Nobody with a game; move him to bench or IR</small>'}</span>
-      <span class="out">Bench</span><span>${c.out ? `${esc(c.out.p.name)}<small>${c.out.reason}${c.out.v != null ? ', value ' + fmt(c.out.v) : ''}</small>` : '<small>Fills an empty slot</small>'}</span></div>`).join('')}</div>`;
+      <span class="out">Bench</span><span>${c.out ? `${esc(c.out.p.name)}<small>${c.out.reason}${c.out.v != null ? ', value ' + fmt(c.out.v) : ''}</small>` : '<small>Fills an empty slot</small>'}</span>
+      ${c.gain != null ? `<span class="gain ${c.gain < CLOSE_CALL ? 'close' : ''}">${c.gain < CLOSE_CALL ? 'Toss-up' : 'Gain'} ${fmtS(c.gain)}</span>` : ''}</div>`).join('')}</div>`;
   top += `<button class="btn primary" id="adopt" style="margin-top:10px">Save this as my active lineup</button>`;
+  if (ui.cmp.size) {
+    const names = [...ui.cmp].map(id => esc(P.get(id)?.name || id)).join(', ');
+    top += `<div class="cmpbar"><span>Comparing: <b>${names}</b></span><button class="btn small primary" id="cmpOpen" ${ui.cmp.size < 2 ? 'disabled' : ''}>Compare side by side</button><button class="btn small" id="cmpClear">Clear</button></div>`;
+  }
   $('changes').innerHTML = top;
 
   let html = '';
   for (const grp of ['F', 'D', 'G']) {
-    const rows = lu[grp], starts = rows.filter(x => x.start).length;
+    const rows = lu[grp], starts = rows.filter(x => x.start).length, cut = lu.cuts[grp];
     const label = { F: 'Forwards', D: 'Defensemen', G: 'Goalies' }[grp];
     html += `<div class="group"><div class="group-head"><h3>${label}</h3><span class="meta">${starts} of ${SLOTS[grp]} slots filled</span></div>`;
-    html += rows.map(x => `<div class="row ${x.start ? '' : 'bench'}">
+    if (cut) html += `<p class="cutline ${cut.gap < CLOSE_CALL ? 'close' : ''}">Cut line: <b>${esc(cut.last.p.name)}</b> ${fmt(cut.last.rankV)} starts, <b>${esc(cut.next.p.name)}</b> ${fmt(cut.next.rankV)} sits. ${cut.gap < CLOSE_CALL ? `Gap ${fmt(cut.gap)}: a toss-up, so use form, injury news or confirmed goalies to decide.` : `Gap ${fmt(cut.gap)}: a clear call.`}</p>`;
+    html += rows.map(x => {
+      const sel = ui.cmp.has(x.p.id);
+      return `<div class="row ${x.start ? '' : 'bench'}">
         <span class="slot ${x.start ? 'start' : 'benchl'}">${x.start ? grp : 'BN'}</span>
-        <div style="min-width:0"><button class="pname" data-open="${x.p.id}">${esc(x.p.name)}</button>${tags(x.p, x.r, x.ctx)}
-          <div class="meta">${esc(x.p.team || 'No NHL team')} ${esc(x.p.pos)}${x.reason ? ', ' + x.reason.toLowerCase() : ''}</div></div>
+        <div style="min-width:0"><button class="pname" data-open="${x.p.id}">${esc(x.p.name)}</button>${tags(x.p, x.r, x.ctx)}${x.close ? ' <span class="tag warn" title="Within 1.0 of the cut line">Toss-up</span>' : ''}${x.r.active ? ' <span class="tag">Active now</span>' : ''}
+          <div class="meta">${esc(x.p.team || 'No NHL team')} ${esc(x.p.pos)}${x.reason ? ', ' + x.reason.toLowerCase() : ''}</div>
+          <div class="drivers">${driversHtml(x.p, x.ctx)}</div></div>
         <span>${oppHtml(x.ctx)} ${gradeHtml(x.p, x.ctx)}</span>
-        <span class="why">${x.r.active ? 'Active now' : ''}</span>
-        <span class="val num">${x.v == null ? '–' : fmt(x.v)}</span></div>`).join('') || '<p class="hint">No players in this group. Add them on the Roster tab.</p>';
+        <div class="valcell">${x.v == null ? '<span class="val num">–</span>' : `<button class="valbtn num" data-why="${x.p.id}" data-whyday="${day}" title="Why this value?">${fmt(x.v)}</button>`}
+          <button class="cmpbtn" data-cmptoggle="${x.p.id}" aria-pressed="${sel}">${sel ? 'Comparing' : 'Compare'}</button></div></div>`;
+    }).join('') || '<p class="hint">No players in this group. Add them on the Roster tab.</p>';
     html += '</div>';
   }
   $('lineup').innerHTML = html;
@@ -646,7 +885,7 @@ function renderWeek() {
     }).join('') + '<td></td><td></td></tr>';
   }
   h += `<tr><td>NHL games</td>${days.map(d => `<td class="c num">${(GAMES_BY_DAY.get(d) || []).length || '·'}</td>`).join('')}<td></td><td></td></tr></tfoot>`;
-  $('weekTable').innerHTML = h + `<caption style="caption-side:bottom;text-align:left;padding-top:8px" class="meta">${emptyTotal} empty slot-days and ${overTotal} benched games this week. * = back-to-back. Days outside the 3-week data window show as empty.</caption>`;
+  $('weekTable').innerHTML = h + `<caption style="caption-side:bottom;text-align:left;padding-top:8px" class="meta">${emptyTotal} empty slot-days and ${overTotal} benched games this week. * = back-to-back. Days beyond the schedule in data.json show as empty.</caption>`;
 }
 
 function renderCats() {
@@ -734,6 +973,91 @@ function renderAddResults() {
   box.hidden = false;
 }
 
+// ---------------------------------------------------------------- player card
+const OFF_K = ['g', 'a', 'ppp', 'sog'], DEF_K = ['blk', 'hit', 'pm'];
+const RCOL = { off: '#4C8CA8', def: '#D1621C', net: '#8A8178' };
+// Offense = average gap (in SD) of goals, assists, power-play points and shots per game from an average
+// fantasy skater; Defense = blocks, hits and plus/minus; Net = Offense + Defense. Faceoffs and GWG are left out.
+function skRating(r) {
+  const z = k => (r[k] - NORM[k].mu) / NORM[k].sd;
+  const off = OFF_K.reduce((s, k) => s + z(k), 0) / OFF_K.length, def = DEF_K.reduce((s, k) => s + z(k), 0) / DEF_K.length;
+  return { off, def, net: off + def };
+}
+function winRates(p, w) {
+  const o = p[w]; if (!o || !o.gp) return null;
+  const r = {}; SK.forEach(([, k]) => r[k] = o[k] / o.gp); return r;
+}
+const RPOOL = {};
+function ratingPool(src) {
+  if (RPOOL[src]) return RPOOL[src];
+  const arr = { off: [], def: [], net: [] };
+  const list = src === 'blend' ? LIST_POOL : [...P.values()].filter(p => p.kind === 'S' && p[src] && p[src].gp >= minGp('S', src));
+  for (const p of list) {
+    const r = src === 'blend' ? p.rate : winRates(p, src); if (!r) continue;
+    const x = skRating(r); arr.off.push(x.off); arr.def.push(x.def); arr.net.push(x.net);
+  }
+  for (const k of ['off', 'def', 'net']) arr[k].sort((a, b) => a - b);
+  return RPOOL[src] = arr;
+}
+function pctIn(sorted, v) {
+  if (sorted.length < 10 || v == null) return null;
+  let lo = 0, hi = sorted.length;
+  while (lo < hi) { const m = (lo + hi) >> 1; if (sorted[m] < v) lo = m + 1; else hi = m; }
+  let eq = lo; while (eq < sorted.length && sorted[eq] === v) eq++;
+  return 100 * (lo + (eq - lo) / 2) / sorted.length;
+}
+function gaugeHtml(label, text, pctile, color) {
+  const r = 44, C = 2 * Math.PI * r, arc = C * 0.75, f = pctile == null ? 0 : clamp(pctile, 0, 100) / 100;
+  return `<div class="gauge"><svg viewBox="0 0 120 108" role="img" aria-label="${esc(label)} ${esc(text)}${pctile == null ? '' : ', percentile ' + Math.round(pctile)}">
+    <circle cx="60" cy="56" r="${r}" class="gt" stroke-dasharray="${arc} ${C}" transform="rotate(135 60 56)"/>
+    <circle cx="60" cy="56" r="${r}" class="gf" stroke="${color}" stroke-dasharray="${arc * f} ${C}" transform="rotate(135 60 56)"/>
+    <text x="60" y="64" class="gv">${esc(text)}</text><text x="60" y="82" class="gl" style="fill:${color}">${esc(label)}</text>
+    <text x="60" y="97" class="gs">${pctile == null ? 'no percentile' : 'Percentile ' + Math.round(pctile)}</text></svg></div>`;
+}
+function stripHtml(p, w) {
+  const items = p.kind === 'S'
+    ? [['GP', 'gp', 0], ['G', 'g', 1], ['A', 'a', 1], ['PTS', null, 0], ['+/-', 'pm', 1], ['PPP', 'ppp', 1], ['SOG', 'sog', 1], ['FW', 'fw', 1], ['HIT', 'hit', 1], ['BLK', 'blk', 1]]
+    : [['GP', 'gp', 0], ['GS', 'gs', 1], ['W', 'w', 1], ['SV', 'sv', 1], ['SV%', 'svp', 1], ['SHO', 'so', 1]];
+  const o = p[w];
+  return `<div class="strip">${items.map(([lab, k, bar]) => {
+    const v = !o ? null : lab === 'PTS' ? o.g + o.a : k === 'svp' ? (o.sa ? o.sv / o.sa : null) : o[k];
+    const pc = bar && o ? pct(p, w, k, false) : null;
+    return `<div><b class="num">${v == null ? '–' : k === 'svp' ? v.toFixed(3).replace(/^0/, '') : k === 'pm' && v > 0 ? '+' + Math.round(v) : Math.round(v)}</b>${lab}${bar ? `<span class="pb" title="${pc == null ? 'no percentile yet' : Math.round(pc) + 'th percentile per game'}"><i style="width:${pc == null ? 0 : Math.round(pc)}%"></i></span>` : ''}</div>`;
+  }).join('')}</div>`;
+}
+function trendHtml(p) {
+  const ws = [['prev', 'Last yr'], ['cur', 'Season'], ['r30', '30d'], ['rec', '14d'], ['r7', '7d']];
+  const pts = ws.map(([w, lab]) => { const r = winRates(p, w); if (!r) return null; const pool = ratingPool(w), x = skRating(r);
+    return { lab, off: pctIn(pool.off, x.off), def: pctIn(pool.def, x.def), net: pctIn(pool.net, x.net) }; });
+  if (pts.filter(q => q && q.net != null).length < 2) return '';
+  const W_ = 320, H = 150, L = 30, R = 12, T = 12, B = 26, x = i => L + i * (W_ - L - R) / (ws.length - 1), y = v => T + (H - T - B) * (1 - v / 100);
+  let g = [0, 25, 50, 75, 100].map(v => `<line class="gl2" x1="${L}" x2="${W_ - R}" y1="${y(v)}" y2="${y(v)}"/><text x="${L - 4}" y="${y(v) + 3.5}" text-anchor="end">${v}</text>`).join('');
+  ws.forEach(([, lab], i) => g += `<text x="${x(i)}" y="${H - 8}" text-anchor="${i === 0 ? 'start' : i === ws.length - 1 ? 'end' : 'middle'}">${esc(lab)}</text>`);
+  for (const k of ['off', 'def', 'net']) {
+    let d = '', pen = false;
+    pts.forEach((q, i) => { if (!q || q[k] == null) { pen = false; return; } d += `${pen ? 'L' : 'M'}${x(i).toFixed(1)} ${y(q[k]).toFixed(1)} `; pen = true; });
+    g += `<path d="${d}" fill="none" stroke="${RCOL[k]}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>` +
+      pts.map((q, i) => q && q[k] != null ? `<circle cx="${x(i).toFixed(1)}" cy="${y(q[k]).toFixed(1)}" r="3" fill="${RCOL[k]}"><title>${esc(ws[i][1])}, ${k === 'off' ? 'offense' : k === 'def' ? 'defense' : 'net'}: ${Math.round(q[k])}th percentile</title></circle>` : '').join('');
+  }
+  return `<div><h3>Rating percentiles over time</h3><div class="trend"><svg viewBox="0 0 ${W_} ${H}" role="img" aria-label="Offense, defense and net rating percentile by time window">${g}</svg></div>
+    <div class="legend" style="margin-top:2px"><span class="tag" style="border-color:${RCOL.off};color:${RCOL.off}">Offense</span><span class="tag" style="border-color:${RCOL.def};color:${RCOL.def}">Defense</span><span class="tag" style="border-color:${RCOL.net};color:${RCOL.net}">Net</span></div>
+    <p class="hint">Each point uses only the games in that window, so short windows swing. Percentiles compare with NHL skaters who played enough games in the same window.</p></div>`;
+}
+function cardTop(p) {
+  if (p.kind === 'S') {
+    const x = skRating(p.rate), pool = ratingPool('blend');
+    const w = p.cur && p.cur.gp >= 1 && poolValues('S', 'cur', 'g', null).length >= 10 ? 'cur' : 'prev';
+    return `<div class="gauges">${gaugeHtml('Offense', fmtS(x.off), pctIn(pool.off, x.off), RCOL.off)}${gaugeHtml('Defense', fmtS(x.def), pctIn(pool.def, x.def), RCOL.def)}${gaugeHtml('Net', fmtS(x.net), pctIn(pool.net, x.net), RCOL.net)}</div>
+      <p class="hint">Ratings use his blended per-game rates, as the lineup model does. Offense: goals, assists, power-play points and shots. Defense: blocks, hits and plus/minus. Each is the average gap from an average fantasy skater in standard deviations; Net is Offense plus Defense. Percentiles compare with NHL skaters who have played 20+ games over this and last season.</p>
+      <div><h3>${w === 'cur' ? D.season.slice(0, 4) + '-' + D.season.slice(6) + ' so far' : D.prevSeason.slice(0, 4) + '-' + D.prevSeason.slice(6)}</h3><p class="hint" style="margin-top:0">Bars show league percentile per game${w === 'prev' ? ' (last season, because few games have been played this year)' : ''}.</p>${stripHtml(p, w)}</div>${trendHtml(p)}`;
+  }
+  const r = p.rate, gl = [...P.values()].filter(q => q.kind === 'G' && q.rate.share >= 0.15);
+  const col = k => gl.map(q => q.rate[k]).sort((a, b) => a - b);
+  const w = p.cur && p.cur.gp >= 1 && poolValues('G', 'cur', 'w', null).length >= 10 ? 'cur' : 'prev';
+  return `<div class="gauges">${gaugeHtml('Starts', Math.round(r.share * 100) + '%', pctIn(col('share'), r.share), RCOL.off)}${gaugeHtml('Wins', fmt(r.wps, 2), pctIn(col('wps'), r.wps), RCOL.def)}${gaugeHtml('Saves', r.svp.toFixed(3).replace(/^0/, ''), pctIn(col('svp'), r.svp), RCOL.net)}</div>
+    <p class="hint">Starts: share of his team's games he plays. Wins: wins per start. Saves: save percentage. All use blended rates and compare with goalies who start at least 15% of games.</p>
+    <div><h3>${w === 'cur' ? D.season.slice(0, 4) + '-' + D.season.slice(6) + ' so far' : D.prevSeason.slice(0, 4) + '-' + D.prevSeason.slice(6)}</h3>${stripHtml(p, w)}</div>`;
+}
 function openPlayer(id) {
   const p = P.get(Number(id)); if (!p) return;
   const r = roster.find(x => x.id === p.id);
@@ -741,27 +1065,43 @@ function openPlayer(id) {
   const skF = [['GP', 'gp'], ['G', 'g'], ['A', 'a'], ['+/-', 'pm'], ['PPP', 'ppp'], ['GWG', 'gwg'], ['SOG', 'sog'], ['FW', 'fw'], ['HIT', 'hit'], ['BLK', 'blk']];
   const gF = [['GP', 'gp'], ['GS', 'gs'], ['W', 'w'], ['SV', 'sv'], ['SA', 'sa'], ['SHO', 'so']];
   const f = p.kind === 'G' ? gF : skF;
-  const next = [...Array(10)].map((_, i) => addDays(etToday(), i)).map(d => [d, p.team ? ctxFor(p.team, d) : null]).filter(x => x[1]).slice(0, 5);
-  const rates = p.kind === 'G'
-    ? `Start share ${Math.round(p.rate.share * 100)}%, wins per start ${fmt(p.rate.wps, 2)}, save % ${p.rate.svp.toFixed(3).replace(/^0/, '')}, shutouts per start ${fmt(p.rate.sops, 2)}`
-    : SK.map(([lab, k]) => `${lab} ${fmt(p.rate[k], 2)}`).join(', ');
+  const next = [...Array(14)].map((_, i) => addDays(etToday(), i)).map(d => [d, p.team ? ctxFor(p.team, d) : null]).filter(x => x[1]).slice(0, 5);
   $('dlg').innerHTML = `<div class="dlg-head"><div><h2 id="dlgTitle">${esc(p.name)}</h2><div class="meta">${esc(p.team || 'No NHL team')} ${esc(p.pos)}${r ? ', on your roster (' + r.status + ')' : ''}</div></div><button class="btn small" data-close>Close</button></div>
     <div class="dlg-body">
-      <div><h3>This season</h3><p class="hint">${line(p.cur, f)}</p></div>
-      <div><h3>Last 14 days</h3><p class="hint">${line(p.rec, f)}</p></div>
-      <div><h3>Last season</h3><p class="hint">${line(p.prev, f)}</p></div>
-      <div><h3>Projected per game</h3><p class="hint">${rates}. Blends this season with last season until about 15 games, and gives the last 14 days 30% weight.</p></div>
-      <div><h3>Next games</h3>${next.length ? `<table><tbody>${next.map(([d, ctx]) => `<tr><td>${weekday(d)} ${dayMonth(d)}</td><td>${oppHtml(ctx)}${ctx.myB2B ? ' <span class="tag warn">B2B</span>' : ''}</td><td>${gradeHtml(p, ctx)}</td><td class="r num">${fmt(value(p, ctx))}</td></tr>`).join('')}</tbody></table>` : '<p class="hint">No games in the data window.</p>'}</div>
+      ${cardTop(p)}
+      <div><h3>Next games</h3>${next.length ? `<table><tbody>${next.map(([d, ctx]) => `<tr><td>${weekday(d)} ${dayMonth(d)}</td><td>${oppHtml(ctx)}${ctx.myB2B ? ' <span class="tag warn">B2B</span>' : ''}</td><td>${gradeHtml(p, ctx)}</td><td class="r num"><button class="valbtn" data-why="${p.id}" data-whyday="${d}" title="Why this value?">${fmt(value(p, ctx))}</button></td></tr>`).join('')}</tbody></table><p class="hint">Click a value to see where it comes from.</p>` : '<p class="hint">No games in the data window.</p>'}</div>
+      <div><h3>The numbers</h3><p class="hint"><b>This season</b> ${line(p.cur, f)}<br><b>Last 14 days</b> ${line(p.rec, f)}<br><b>Last season</b> ${line(p.prev, f)}</p></div>
+      ${ratesCard(p)}
     </div>`;
   if (!$('dlg').open) $('dlg').showModal();
 }
 
+const rosterSig = list => list.map(x => x.id).sort((a, b) => a - b).join(',');
+function renderRosterBanner() {
+  const b = $('rosterBanner');
+  if (!fileRoster.length || !roster.length) { b.hidden = true; return; }
+  const fs = rosterSig(fileRoster); let dismissed = '';
+  try { dismissed = localStorage.getItem(LS_DISMISS) || ''; } catch (e) {}
+  if (fs === rosterSig(roster) || fs === dismissed) { b.hidden = true; return; }
+  const have = new Set(roster.map(r => r.id)), want = new Set(fileRoster.map(r => r.id));
+  const add = fileRoster.filter(r => !have.has(r.id)), drop = roster.filter(r => !want.has(r.id));
+  const nm = r => esc(P.get(r.id)?.name || r.name || r.id);
+  b.innerHTML = `<strong>roster.json has changed.</strong> ${add.length ? 'In the file but not in your saved roster: <b>' + add.map(nm).join(', ') + '</b>. ' : ''}${drop.length ? 'In your saved roster but not in the file: <b>' + drop.map(nm).join(', ') + '</b>.' : ''}
+    <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn small primary" data-banner="apply">Update my roster to match the file</button><button class="btn small" data-banner="keep">Keep my saved roster</button></div>
+    <p class="hint" style="margin-top:6px">Updating keeps the status and active flags of players who stay.</p>`;
+  b.hidden = false;
+}
+
 function render() {
+  renderRosterBanner();
   $('fresh').className = 'fresh';
   const ageH = (Date.now() - Date.parse(D.generatedAt)) / 36e5;
   $('fresh').innerHTML = `Data updated ${new Date(D.generatedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}` + (ageH > 36 ? '<br>More than a day old: check the GitHub Action' : '');
   if (ageH > 36) $('fresh').classList.add('stale');
-  $('foot').textContent = D.warnings && D.warnings.length ? 'Data warnings from the last build: ' + D.warnings.join('; ') : '';
+  const notes = [];
+  if (D.warnings && D.warnings.length) notes.push('Data warnings from the last build: ' + D.warnings.join('; '));
+  if (!PROJ) notes.push('projections.json was not found, so expected rates use only this season and last season.');
+  $('foot').textContent = notes.join(' ');
   document.querySelectorAll('[data-view]').forEach(s => s.hidden = s.dataset.view !== ui.tab);
   document.querySelectorAll('nav button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === ui.tab));
   if (ui.tab === 'lineup') { renderDays(); renderLineup(); }
@@ -774,11 +1114,9 @@ function render() {
 const WINDOWS = [['r7', '7 days'], ['rec', '14 days'], ['r30', '30 days'], ['cur', 'Season'], ['prev', 'Last season']];
 const WCOLOR = { r7: 'var(--w7)', rec: 'var(--w14)', r30: 'var(--w30)', cur: 'var(--wcur)', prev: 'var(--wprev)' };
 const NOMINAL_GP = { S: { r7: 2, rec: 3, r30: 6, prev: 20 }, G: { r7: 1, rec: 2, r30: 3, prev: 10 } };
-const PALETTE = ['#2F6DB5', '#E07B00', '#2E8B57', '#8E5BB5', '#C62828', '#1B9AAA', '#8C6D31', '#D1578B'];
 const GROUP_LABEL = { F: 'Forwards', D: 'Defensemen', G: 'Goalies' };
-const MAX_SEL = 8;
-const fm = { mode: 'windows', scope: 'team', hidden: new Set(['prev']), win: 'rec', sel: ['F', 'D', 'G'],
-  colors: new Map(), note: '', heatWin: 'rec', heatInit: false, cmp: 'all' };
+const fm = { mode: 'compare', metric: 'day', view: 'chart', sel: null, extra: [], scope: 'team', hidden: new Set(['prev']),
+  heatWin: 'rec', heatInit: false, cmp: 'all' };
 const hs = { scope: 'team', gran: 'week', preset: 'all', from: null, to: null, mode: 'period' };
 const PCT_CACHE = new Map(), AVAIL = {}, LEAD = {};
 
@@ -861,19 +1199,9 @@ function scopeOptions(current) {
     ['F', 'D', 'G'].map(g => `<option value="${g}" ${current === g ? 'selected' : ''}>${GROUP_LABEL[g]}</option>`).join('') +
     `<optgroup label="Players">${rp.map(p => `<option value="${p.id}" ${current === String(p.id) ? 'selected' : ''}>${esc(p.name)} (${p.group})</option>`).join('')}</optgroup>`;
 }
-function entityPlayers(e) { return playersFor(e); }
-function entityKind(e) { return e === 'G' ? 'G' : e === 'F' || e === 'D' ? 'S' : (P.get(Number(e)) || {}).kind; }
-function entityLabel(e) { return GROUP_LABEL[e] || (P.get(Number(e)) || {}).name || e; }
-function entityColor(e) { return fm.colors.get(e) || 'var(--muted)'; }
-function assignColors() {
-  for (const k of [...fm.colors.keys()]) if (!fm.sel.includes(k)) fm.colors.delete(k);
-  for (const e of fm.sel) if (!fm.colors.has(e)) {
-    const used = new Set(fm.colors.values());
-    fm.colors.set(e, PALETTE.find(c => !used.has(c)) || PALETTE[0]);
-  }
-}
+const shortName = n => { const t = n.split(' '); return t.length > 1 ? t[0][0] + '. ' + t.slice(1).join(' ') : n; };
 
-// ---- bar chart (percentiles)
+// ---- bar chart (percentiles by time window)
 function svgBars(cats, series) {
   const vis = series.filter(s => !s.hidden);
   const gw = Math.max(cats.length > 5 ? 96 : 84, vis.length * 13 + 22), left = 40, top = 12, ph = 180, W = left + cats.length * gw + 10, H = top + ph + 34;
@@ -893,70 +1221,255 @@ function svgBars(cats, series) {
   return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Percentile by category">${g}</svg>`;
 }
 
-// ---- Recent form panel
+// ---------------------------------------------------------------- metrics (the "Show" dropdown)
+const METRICS = [
+  { id: 'day', label: 'Selected day (proj)', grp: 'Projected', type: 'proj', scope: 'day' },
+  { id: 'n7', label: 'Next 7 days (proj)', grp: 'Projected', type: 'proj', scope: 'n', days: 7 },
+  { id: 'n14', label: 'Next 14 days (proj)', grp: 'Projected', type: 'proj', scope: 'n', days: 14 },
+  { id: 'rest', label: 'Remaining games (proj)', grp: 'Projected', type: 'proj', scope: 'rest' },
+  { id: 'sproj', label: 'Season (proj, total)', grp: 'Projected', type: 'proj', scope: 'season' },
+  { id: 'r7a', label: 'Last 7 days (average)', grp: 'Recent form', type: 'win', win: 'r7', avg: true },
+  { id: 'r7t', label: 'Last 7 days (total)', grp: 'Recent form', type: 'win', win: 'r7', avg: false },
+  { id: 'reca', label: 'Last 14 days (average)', grp: 'Recent form', type: 'win', win: 'rec', avg: true },
+  { id: 'rect', label: 'Last 14 days (total)', grp: 'Recent form', type: 'win', win: 'rec', avg: false },
+  { id: 'r30a', label: 'Last 30 days (average)', grp: 'Recent form', type: 'win', win: 'r30', avg: true },
+  { id: 'r30t', label: 'Last 30 days (total)', grp: 'Recent form', type: 'win', win: 'r30', avg: false },
+  { id: 'cura', label: 'Season (average)', grp: 'Season', type: 'win', win: 'cur', avg: true },
+  { id: 'curt', label: 'Season (total)', grp: 'Season', type: 'win', win: 'cur', avg: false },
+  { id: 'preva', label: 'Last season (average)', grp: 'Season', type: 'win', win: 'prev', avg: true },
+  { id: 'prevt', label: 'Last season (total)', grp: 'Season', type: 'win', win: 'prev', avg: false },
+  { id: 'p7', label: 'Last 7 days', grp: 'League percentile', type: 'pct', win: 'r7' },
+  { id: 'p14', label: 'Last 14 days', grp: 'League percentile', type: 'pct', win: 'rec' },
+  { id: 'p30', label: 'Last 30 days', grp: 'League percentile', type: 'pct', win: 'r30' },
+  { id: 'pcur', label: 'Season', grp: 'League percentile', type: 'pct', win: 'cur' },
+  { id: 'pprev', label: 'Last season', grp: 'League percentile', type: 'pct', win: 'prev' },
+];
+const metricById = id => METRICS.find(m => m.id === id) || METRICS[0];
+const metricUsable = m => m.type === 'proj' || winAvail(m.win);
+function metricOptions(sel) {
+  const groups = [...new Set(METRICS.map(m => m.grp))];
+  return groups.map(g => `<optgroup label="${g}">${METRICS.filter(m => m.grp === g).map(m =>
+    `<option value="${m.id}" ${m.id === sel ? 'selected' : ''} ${metricUsable(m) ? '' : 'disabled'}>${m.label}${metricUsable(m) ? '' : ' (no data)'}</option>`).join('')}</optgroup>`).join('');
+}
+const lastGameDate = () => D.games.length ? D.games[D.games.length - 1].d : etToday();
+function projDates(m) {
+  const today = etToday();
+  if (m.scope === 'day') return [ui.day];
+  const stop = m.scope === 'n' ? addDays(today, m.days - 1) : lastGameDate();
+  const out = [];
+  for (let d = today; d <= stop && out.length < 400; d = addDays(d, 1)) out.push(d);
+  return out;
+}
+
+// One player, one metric -> { n: games, vals: {category: number}, value }
+function winMetric(p, m) {
+  const o = p[m.win];
+  if (!o || !o.gp) return { n: 0, vals: null, value: null };
+  const vals = {};
+  if (p.kind === 'S') {
+    let v = 0;
+    SK.forEach(([lab, k]) => { vals[k] = m.avg ? o[k] / o.gp : o[k]; v += W[lab] * (o[k] / o.gp - NORM[k].mu) / NORM[k].sd; });
+    return { n: o.gp, vals, value: m.avg ? v : v * o.gp, int: !m.avg };
+  }
+  ['w', 'sv', 'so'].forEach(k => vals[k] = m.avg ? o[k] / o.gp : o[k]);
+  vals.svp = o.sa ? o.sv / o.sa : null;
+  return { n: o.gp, vals, value: null, int: !m.avg };
+}
+function projMetric(p, m) {
+  const dates = projDates(m);
+  let n = 0, total = 0;
+  if (p.kind === 'S') {
+    const vals = {}; SK.forEach(([, k]) => vals[k] = 0);
+    for (const d of dates) {
+      const ctx = p.team ? ctxFor(p.team, d) : null; if (!ctx) continue;
+      const e = skaterExp(p, ctx); n++; total += value(p, ctx);
+      SK.forEach(([, k]) => vals[k] += e[k]);
+    }
+    if (!n && m.scope !== 'season') return { n: 0, vals: null, value: null };
+    if (m.scope === 'season' && p.cur) {
+      n += p.cur.gp; SK.forEach(([, k]) => vals[k] += p.cur[k] || 0);
+      total += winMetric(p, { win: 'cur', avg: false }).value || 0;
+    }
+    return { n, vals, value: total };
+  }
+  const vals = { w: 0, sv: 0, so: 0 }; let sa = 0;
+  for (const d of dates) {
+    const ctx = p.team ? ctxFor(p.team, d) : null; if (!ctx) continue;
+    const e = goalieExp(p, ctx); n += e.pStart; total += value(p, ctx);
+    vals.w += e.w; vals.sv += e.sv; vals.so += e.so; sa += e.sv / e.svp;
+  }
+  if (!n && m.scope !== 'season') return { n: 0, vals: null, value: null };
+  if (m.scope === 'season' && p.cur) { n += p.cur.gs; vals.w += p.cur.w; vals.sv += p.cur.sv; vals.so += p.cur.so; sa += p.cur.sa; }
+  vals.svp = sa ? vals.sv / sa : null;
+  return { n, vals, value: m.scope === 'season' ? null : total, frac: true };
+}
+function pctMetric(players, m, kind) {
+  const ks = kind === 'S' ? SK : GC, vals = {}; let s = 0, c = 0;
+  ks.forEach(([, k]) => { const v = groupPct(players, m.win, k, false); vals[k] = v; if (v != null) { s += v; c++; } });
+  return { n: players.reduce((a, p) => a + (p[m.win]?.gp || 0), 0), vals, value: c ? s / c : null, pct: true };
+}
+// A column of the comparison: one player, or (percentiles only) a whole position group.
+function colFor(e, m) {
+  const group = ['F', 'D', 'G'].includes(e);
+  const players = group ? playersFor(e) : [P.get(Number(e))];
+  if (!players[0]) return null;
+  const kind = group ? (e === 'G' ? 'G' : 'S') : players[0].kind;
+  const d = m.type === 'pct' ? pctMetric(players, m, kind) : group ? null : m.type === 'win' ? winMetric(players[0], m) : projMetric(players[0], m);
+  if (!d) return null;
+  const p = group ? null : players[0], r = p ? roster.find(x => x.id === p.id) : null;
+  return { e, p, r, kind, grp: group ? e : p.group, label: group ? GROUP_LABEL[e] : p.name, short: group ? GROUP_LABEL[e] : shortName(p.name), d, extra: !!p && !r };
+}
+
+function fmtCell(k, v, m) {
+  if (v == null || isNaN(v)) return '–';
+  if (m.type === 'pct') return String(Math.round(v));
+  if (k === 'svp') return v.toFixed(3).replace(/^0/, '');
+  const sign = k === 'pm' && v > 0 ? '+' : '';
+  if (m.type === 'win' && !m.avg) return sign + Math.round(v);
+  const a = Math.abs(v);
+  return sign + (a >= 100 ? v.toFixed(0) : a >= 10 ? v.toFixed(1) : v.toFixed(2));
+}
+function metricNote(m) {
+  if (m.type === 'pct') return `League percentile per game over ${winLabel(m.win)}: 50 is a typical NHL player and 90 means better than 90% of them. A skater needs ${minGp('S', m.win)}+ games to be ranked (goalies ${minGp('G', m.win)}+). Groups use the games-weighted average of their players. "Average percentile" is the mean over the categories shown.`;
+  if (m.type === 'win') return `Actual stats over ${winLabel(m.win)}, whether or not the player was in your active lineup. ${m.avg ? 'Averages are per game played.' : 'Totals are raw counts.'} Value (skaters only) is his actual per-game rate set against an average fantasy starter${m.avg ? '' : ', times games played'}; see Why this value on the Lineup tab for the method.`;
+  const dates = projDates(m), span = dates.length === 1 ? `${weekday(dates[0])} ${dayMonth(dates[0])}` : `${dayMonth(dates[0])} to ${dayMonth(dates[dates.length - 1])}`;
+  return `Model projection for ${span}: each team's schedule, the opponent's defence, home ice and back-to-backs, applied to the player's blended per-game rates. ${m.scope === 'season' ? 'Season (proj) is the totals so far plus the projection for the games that remain.' : 'Value is the sum of the daily values.'} Goalies show expected starts, so a backup on a heavy schedule still counts less than a starter.`;
+}
+
+// ---- comparison output: ranked bars
+function rankedHtml(cols, m, kind) {
+  const defs = (kind === 'S' ? SK : GC).map(([lab, k]) => [lab, k]).concat([[m.type === 'pct' ? 'Average percentile' : 'Value', '_v']]);
+  const list = cols.filter(c => c.kind === kind);
+  let html = '<div class="rk-grid">';
+  for (const [lab, k] of defs) {
+    const items = list.map(c => ({ c, v: k === '_v' ? c.d.value : c.d.vals ? c.d.vals[k] : null })).filter(x => x.v != null && !isNaN(x.v)).sort((a, b) => b.v - a.v);
+    if (k === '_v' && !items.length) continue;
+    const vs = items.map(x => x.v);
+    let lo = Math.min(0, ...vs), hi = Math.max(0, ...vs);
+    if (m.type === 'pct') { lo = 0; hi = 100; }
+    else if (k === 'svp' && vs.length) { const mn = Math.min(...vs), mx = Math.max(...vs); lo = Math.max(0, mn - Math.max(0.004, (mx - mn) * 0.6)); hi = mx; }
+    if (!(hi > lo)) hi = lo + 1;
+    const pos = v => (v - lo) / (hi - lo) * 100;
+    const base = clamp(0, lo, hi), zero = lo < 0 && hi > 0 ? pos(0) : null;
+    html += `<div class="rk"><h4><span>${esc(lab)}</span>${k === '_v' ? '<span class="meta">sum of the categories</span>' : ''}</h4>` +
+      (items.length ? items.map((x, i) => {
+        const a = pos(Math.min(x.v, base)), b = pos(Math.max(x.v, base));
+        return `<div class="rk-row" title="${esc(x.c.label)}: ${fmtCell(k === '_v' ? 'v' : k, x.v, k === '_v' && m.type !== 'pct' ? { type: 'proj' } : m)}">
+          <span class="rk-name">${esc(x.c.short)}${x.c.extra ? '*' : ''}</span>
+          <div class="rk-track">${zero != null ? `<i class="rk-zero" style="left:${zero}%"></i>` : ''}<i class="rk-fill ${x.c.extra ? 'X' : x.c.grp}" style="left:${a}%;width:${Math.max(1, b - a)}%"></i></div>
+          <span class="rk-val num ${i === 0 && items.length > 1 ? 'top' : ''}">${k === '_v' ? (m.type === 'pct' ? Math.round(x.v) : fmtS(x.v)) : fmtCell(k, x.v, m)}</span></div>`;
+      }).join('') : '<p class="hint" style="margin:6px 0 2px">No data for the selected players.</p>') + '</div>';
+  }
+  return html + '</div>';
+}
+
+// ---- comparison output: side-by-side table with the best value in each row highlighted
+function cmpTableHtml(cols, m, kind, day) {
+  const list = cols.filter(c => c.kind === kind);
+  if (!list.length) return '';
+  const defs = kind === 'S' ? SK : GC, isPct = m.type === 'pct';
+  const nLabel = isPct ? 'Games' : m.type === 'proj' ? (kind === 'S' ? 'Games' : 'Starts') : 'GP';
+  const head = `<tr><th></th>${list.map(c => `<th>${c.p ? `<button class="pname" data-open="${c.p.id}">${esc(c.label)}</button>` : esc(c.label)}${c.extra ? ' <span class="tag" title="Not on your roster">Not mine</span>' : ''}${c.r && c.r.status !== 'Healthy' ? ` <span class="tag ${c.r.status === 'DTD' ? 'warn' : 'bad'}">${c.r.status}</span>` : ''}
+    <div class="meta">${c.p ? esc(c.p.team || '–') + ' ' + esc(c.p.pos) : ''}</div></th>`).join('')}</tr>`;
+  const best = (vals) => { const nums = vals.filter(v => v != null && !isNaN(v)); if (nums.length < 2) return null; const mx = Math.max(...nums); return nums.every(v => Math.abs(v - mx) < 1e-9) ? null : mx; };
+  const row = (lab, vals, fmtFn, extraCell) => { const b = best(vals);
+    return `<tr><th scope="row">${lab}</th>${vals.map((v, i) => { const txt = v == null || isNaN(v) ? '–' : fmtFn(v), hit = b != null && v != null && Math.abs(v - b) < 1e-9;
+      return `<td>${extraCell ? extraCell(list[i], hit, txt) : (hit ? `<span class="best">${txt}</span>` : txt)}</td>`; }).join('')}</tr>`; };
+  let body = '';
+  if (m.id === 'day') body += `<tr><th scope="row">Opponent</th>${list.map(c => { const ctx = c.p && c.p.team ? ctxFor(c.p.team, day || ui.day) : null; return `<td>${oppHtml(ctx)} ${gradeHtml(c.p, ctx)}${ctx && ctx.myB2B ? ' <span class="tag warn">B2B</span>' : ''}</td>`; }).join('')}</tr>`;
+  body += row(nLabel, list.map(c => c.d.n), v => (m.type === 'proj' && kind === 'G' ? v.toFixed(1) : String(Math.round(v))));
+  for (const [lab, k] of defs) body += row(esc(lab), list.map(c => c.d.vals ? c.d.vals[k] : null), v => fmtCell(k, v, m));
+  const valLab = isPct ? 'Average percentile' : 'Value';
+  body += row(valLab, list.map(c => c.d.value), v => isPct ? String(Math.round(v)) : fmtS(v),
+    (c, hit, txt) => { const inner = hit ? `<span class="best">${txt}</span>` : txt;
+      return !isPct && m.id === 'day' && c.p && c.d.value != null ? `<button class="valbtn" data-why="${c.p.id}" data-whyday="${day || ui.day}" title="Why this value?">${inner}</button>` : inner; });
+  return `<table class="cmp"><thead>${head}</thead><tbody>${body}</tbody></table>`;
+}
+
+// ---------------------------------------------------------------- Recent form panel
 function renderForm() {
   document.querySelectorAll('#formMode button').forEach(b => b.setAttribute('aria-pressed', b.dataset.fmode === fm.mode));
-  assignColors();
-  if (fm.mode === 'windows' && ![...['team', 'F', 'D', 'G'], ...rosterPlayers().map(x => String(x.p.id))].includes(fm.scope)) fm.scope = 'team';
-  if (!winAvail(fm.win)) fm.win = WINDOWS.map(x => x[0]).find(winAvail) || 'cur';
-  fm.sel = fm.sel.filter(e => ['F', 'D', 'G'].includes(e) || rosterPlayers().some(x => String(x.p.id) === e));
-  assignColors();
+  $('cmpSearchWrap').hidden = fm.mode !== 'compare';
+  if (fm.mode === 'windows') renderWindowsMode(); else renderCompareMode();
+}
 
-  let ctl;
-  if (fm.mode === 'windows') {
-    ctl = `<div class="ctrl-row"><label class="meta">Show <select id="formScope" aria-label="Players to show">${scopeOptions(fm.scope)}</select></label></div>
-      <div class="legend">${WINDOWS.map(([w, lab]) => {
-        const ok = winAvail(w);
-        return `<button class="lg" data-wtoggle="${w}" aria-pressed="${ok && !fm.hidden.has(w)}" ${ok ? '' : 'disabled title="No data for this window in today\'s build"'}><i style="background:${WCOLOR[w]}"></i>${lab}<span class="meta">${ok ? winLabel(w) : 'no data'}</span></button>`;
-      }).join('')}</div>`;
-  } else {
-    const chip = e => { const on = fm.sel.includes(e);
-      return `<button class="lg" data-ent="${e}" aria-pressed="${on}"><i class="${on ? '' : 'hollow'}" style="background:${on ? entityColor(e) : 'transparent'}"></i>${esc(entityLabel(e))}</button>`; };
-    ctl = `<div class="ctrl-row"><span class="meta lglabel">Window</span><div class="seg" role="group" aria-label="Time window">${WINDOWS.map(([w, lab]) =>
-        `<button data-fwin="${w}" aria-pressed="${fm.win === w}" ${winAvail(w) ? '' : 'disabled'}>${lab}</button>`).join('')}</div>
-        <span class="meta">${winLabel(fm.win)}</span></div>
-      <div class="legend"><span class="meta lglabel">Groups</span>${['F', 'D', 'G'].map(chip).join('')}</div>
-      <div class="legend"><span class="meta lglabel">Players</span>${sortedRoster().map(p => chip(String(p.id))).join('')}</div>
-      <div class="ctrl-row"><button class="btn small" data-fclear>Clear all</button><span class="meta" id="selNote">${esc(fm.note || `${fm.sel.length} of ${MAX_SEL} selected`)}</span></div>`;
-  }
-  $('formControls').innerHTML = ctl;
-  $('formHint').textContent = fm.mode === 'windows'
-    ? 'Average league percentile per game of the selected players in each time window. 50 is a typical NHL regular; 80 means better than 80% of the league. Click a window to hide or show it.'
-    : 'Compare forwards, defensemen and individual players side by side for one time window. Bars are average league percentile per game; 50 is a typical NHL regular. Click a name or group to add or remove it.';
-
+function renderWindowsMode() {
+  if (!['team', 'F', 'D', 'G'].includes(fm.scope) && !rosterPlayers().some(x => String(x.p.id) === fm.scope)) fm.scope = 'team';
+  $('formHint').textContent = 'Average league percentile per game of the selected players in each time window. 50 is a typical NHL regular; 80 means better than 80% of the league. Click a window to hide or show it.';
+  $('formControls').innerHTML = `<div class="ctrl-row"><label class="meta">Show <select id="formScope" aria-label="Players to show">${scopeOptions(fm.scope)}</select></label></div>
+    <div class="legend">${WINDOWS.map(([w, lab]) => {
+      const ok = winAvail(w);
+      return `<button class="lg" data-wtoggle="${w}" aria-pressed="${ok && !fm.hidden.has(w)}" ${ok ? '' : 'disabled title="No data for this window in today\'s build"'}><i style="background:${WCOLOR[w]}"></i>${lab}<span class="meta">${ok ? winLabel(w) : 'no data'}</span></button>`;
+    }).join('')}</div>`;
   const gcats = GC.map(([lab, k]) => [lab, k]);
-  if (fm.mode === 'windows') {
-    const players = playersFor(fm.scope), sk = players.filter(p => p.kind === 'S'), gl = players.filter(p => p.kind === 'G');
-    const series = (list, cats) => WINDOWS.map(([w, lab]) => ({ label: lab, color: WCOLOR[w], hidden: fm.hidden.has(w) || !winAvail(w),
-      values: cats.map(([, k]) => groupPct(list, w, k, false)) }));
-    $('formSkChart').innerHTML = sk.length ? `<h3>Skater categories</h3>${svgBars(SK, series(sk, SK))}` : '';
-    $('formGChart').innerHTML = gl.length ? `<h3>Goalie categories</h3>${svgBars(gcats, series(gl, gcats))}` : '';
-    if (!players.length) $('formSkChart').innerHTML = '<p class="hint">No players in this selection.</p>';
-    // totals: one row per window
-    const cols = (sk.length ? [['GP', 'gp', 'S']].concat(SK.map(c => [c[0], c[1], 'S'])) : []).concat(gl.length ? [['GS', 'gs', 'G'], ['W', 'w', 'G'], ['SV', 'sv', 'G'], ['SV%', 'svp', 'G'], ['SHO', 'so', 'G']] : []);
-    let h = `<thead><tr><th>Window</th>${cols.map(c => `<th class="r">${c[0]}</th>`).join('')}</tr></thead><tbody>`;
-    for (const [w, lab] of WINDOWS) {
-      if (!winAvail(w)) continue;
-      h += `<tr><td>${lab} <span class="meta">${winLabel(w)}</span></td>` + cols.map(([, k, kind]) => `<td class="r num">${fmtTotal(k, sumPlayers(kind === 'S' ? sk : gl, w, k))}</td>`).join('') + '</tr>';
-    }
-    $('formTotals').innerHTML = '<table>' + h + '</tbody></table>';
-    $('formTotalsHead').textContent = 'Totals by window';
-  } else {
-    const w = fm.win, ok = winAvail(w);
-    const ents = k => fm.sel.filter(e => entityKind(e) === k);
-    const series = (list, cats) => list.map(e => ({ label: entityLabel(e), color: entityColor(e), values: cats.map(([, key]) => groupPct(entityPlayers(e), w, key, false)) }));
-    const skE = ents('S'), glE = ents('G');
-    $('formSkChart').innerHTML = !ok ? '<p class="hint">No data for this window.</p>' : skE.length ? `<h3>Skater categories, ${WINDOWS.find(x => x[0] === w)[1].toLowerCase()}</h3>${svgBars(SK, series(skE, SK))}` : '';
-    $('formGChart').innerHTML = ok && glE.length ? `<h3>Goalie categories, ${WINDOWS.find(x => x[0] === w)[1].toLowerCase()}</h3>${svgBars(gcats, series(glE, gcats))}` : '';
-    if (!fm.sel.length) $('formSkChart').innerHTML = '<p class="hint">Select at least one group or player above.</p>';
-    const table = (list, cols, title) => {
-      if (!list.length) return '';
-      return `<table style="margin-bottom:10px"><thead><tr><th>${title}</th>${cols.map(c => `<th class="r">${c[0]}</th>`).join('')}</tr></thead><tbody>` +
-        list.map(e => `<tr><td><span class="lg-dot" style="background:${entityColor(e)}"></span>${esc(entityLabel(e))}</td>${cols.map(([, k]) => `<td class="r num">${fmtTotal(k, sumPlayers(entityPlayers(e), w, k))}</td>`).join('')}</tr>`).join('') + '</tbody></table>';
-    };
-    $('formTotals').innerHTML = ok ? table(skE, [['GP', 'gp']].concat(SK), 'Skaters') + table(glE, [['GS', 'gs'], ['W', 'w'], ['SV', 'sv'], ['SV%', 'svp'], ['SHO', 'so']], 'Goalies') : '';
-    $('formTotalsHead').textContent = 'Totals, ' + WINDOWS.find(x => x[0] === w)[1].toLowerCase();
+  const players = playersFor(fm.scope), sk = players.filter(p => p.kind === 'S'), gl = players.filter(p => p.kind === 'G');
+  const series = (list, cats) => WINDOWS.map(([w, lab]) => ({ label: lab, color: WCOLOR[w], hidden: fm.hidden.has(w) || !winAvail(w), values: cats.map(([, k]) => groupPct(list, w, k, false)) }));
+  const cols = (sk.length ? [['GP', 'gp', 'S']].concat(SK.map(c => [c[0], c[1], 'S'])) : []).concat(gl.length ? [['GS', 'gs', 'G'], ['W', 'w', 'G'], ['SV', 'sv', 'G'], ['SV%', 'svp', 'G'], ['SHO', 'so', 'G']] : []);
+  let h = `<thead><tr><th>Window</th>${cols.map(c => `<th class="r">${c[0]}</th>`).join('')}</tr></thead><tbody>`;
+  for (const [w, lab] of WINDOWS) {
+    if (!winAvail(w)) continue;
+    h += `<tr><td>${lab} <span class="meta">${winLabel(w)}</span></td>` + cols.map(([, k, kind]) => `<td class="r num">${fmtTotal(k, sumPlayers(kind === 'S' ? sk : gl, w, k))}</td>`).join('') + '</tr>';
   }
+  $('formBody').innerHTML = (sk.length ? `<div class="chart"><h3>Skater categories</h3>${svgBars(SK, series(sk, SK))}</div>` : '') +
+    (gl.length ? `<div class="chart"><h3>Goalie categories</h3>${svgBars(gcats, series(gl, gcats))}</div>` : '') +
+    (!players.length ? '<p class="hint">No players in this selection.</p>' : '') +
+    `<h3 style="margin-top:16px">Totals by window</h3><p class="hint">Raw totals of the selected players, whether or not they were in your active lineup.</p><div class="table-wrap" style="margin-top:6px"><table>${h}</tbody></table></div>`;
+}
+
+function renderCompareMode() {
+  let m = metricById(fm.metric);
+  if (!metricUsable(m)) { fm.metric = 'day'; m = metricById('day'); }
+  const isPct = m.type === 'pct';
+  const rosterIds = sortedRoster().map(p => String(p.id));
+  fm.extra = fm.extra.filter(e => P.has(Number(e)) && !rosterIds.includes(e));
+  if (fm.sel) fm.sel = fm.sel.filter(e => ['F', 'D', 'G'].includes(e) || P.has(Number(e)));
+  const selSet = new Set(fm.sel === null ? rosterIds.concat(fm.extra) : fm.sel);
+  const chip = (e, label, grp, extra) => {
+    const group = ['F', 'D', 'G'].includes(e), dis = group && !isPct, on = selSet.has(e) && !dis;
+    return `<span class="chipx"><button class="lg" data-ent="${e}" aria-pressed="${on}" ${dis ? 'disabled title="Groups work with the league percentile views"' : ''}><i class="g-${grp} ${on ? '' : 'hollow'}"></i>${esc(label)}${extra ? ' <span class="meta">not mine</span>' : ''}</button>${extra ? `<button class="x" data-fextra-remove="${e}" aria-label="Remove ${esc(label)}">×</button>` : ''}</span>`;
+  };
+  const today = etToday(), start = D.games.length ? (today < D.games[0].d ? D.games[0].d : today) : today;
+  const dayPicker = m.scope === 'day' ? `<div class="ctrl-row"><span class="meta lglabel">Day (ET)</span><div class="seg" role="group" aria-label="Day">${[...Array(7)].map((_, i) => { const d = addDays(start, i);
+      return `<button data-fday="${d}" aria-pressed="${ui.day === d}">${d === today ? 'Tonight' : weekday(d)} ${dayMonth(d)}</button>`; }).join('')}</div></div>` : '';
+  const n = selSet.size - (isPct ? 0 : ['F', 'D', 'G'].filter(g => selSet.has(g)).length);
+  $('formControls').innerHTML = `<div class="ctrl-row"><label class="meta">Show <select id="fmMetric" aria-label="What to compare">${metricOptions(fm.metric)}</select></label>
+      <div class="seg" id="fmView" role="group" aria-label="Layout"><button data-fview="chart" aria-pressed="${fm.view === 'chart'}">Chart</button><button data-fview="table" aria-pressed="${fm.view === 'table'}">Side by side</button></div></div>
+    ${dayPicker}
+    ${isPct ? `<div class="legend"><span class="meta lglabel">Groups</span>${['F', 'D', 'G'].map(g => chip(g, GROUP_LABEL[g], g)).join('')}</div>` : ''}
+    <div class="legend"><span class="meta lglabel">Players</span>${sortedRoster().map(p => chip(String(p.id), p.name, p.group)).join('')}${fm.extra.map(e => { const p = P.get(Number(e)); return chip(e, p.name, p.group, true); }).join('')}</div>
+    <div class="ctrl-row"><span class="meta lglabel">Select</span><button class="btn small" data-fquick="all">Whole roster</button><button class="btn small" data-fquick="F">Forwards</button><button class="btn small" data-fquick="D">Defensemen</button><button class="btn small" data-fquick="G">Goalies</button><button class="btn small" data-fquick="none">Clear</button>
+      <span class="meta">${n} selected</span></div>`;
+  $('formHint').textContent = isPct ? 'League percentile per game for each selected player or group. 50 is a typical NHL player.' :
+    m.type === 'proj' ? 'Projected totals for the selected players over the chosen period. Use it to decide who to start: the player with the higher value in a one-day view is the better start.' :
+    'Actual stats for the selected players over the chosen period.';
+  const cols = [...selSet].map(e => colFor(e, m)).filter(Boolean).filter(c => !(c.d.vals === null && !isPct));
+  const missing = [...selSet].map(e => colFor(e, m)).filter(c => c && c.d.vals === null && !isPct);
+  const sections = ['S', 'G'].filter(k => cols.some(c => c.kind === k)).map(k =>
+    `<h3 style="margin-top:14px">${k === 'S' ? 'Skaters' : 'Goalies'}</h3>` + (fm.view === 'chart' ? rankedHtml(cols, m, k) : `<div class="table-wrap">${cmpTableHtml(cols, m, k)}</div>`)).join('');
+  $('formBody').innerHTML = `<p class="hint">${metricNote(m)}</p>` +
+    (missing.length ? `<p class="hint"><b>${m.type === 'proj' ? 'No game in this period:' : 'No games in this window:'}</b> ${missing.map(c => esc(c.label)).join(', ')}.</p>` : '') +
+    (cols.length ? sections : missing.length ? '' : '<p class="hint" style="margin-top:12px">Select at least one player above.</p>') +
+    (cols.some(c => c.extra) ? '<p class="hint">* Not on your roster.</p>' : '');
+}
+
+function renderCmpAdd() {
+  const q = $('cmpAdd').value.trim().toLowerCase(), box = $('cmpAddResults');
+  if (q.length < 2) { box.hidden = true; return; }
+  const have = new Set([...roster.map(r => String(r.id)), ...fm.extra]);
+  const hits = [...P.values()].filter(p => p.name.toLowerCase().includes(q)).slice(0, 8);
+  box.innerHTML = hits.map(p => `<div><span><strong>${esc(p.name)}</strong> <span class="meta">${esc(p.team || '–')} ${esc(p.pos)}</span></span>${have.has(String(p.id)) ? '<span class="meta">Already here</span>' : `<button class="btn small primary" data-fadd="${p.id}">Add</button>`}</div>`).join('') || '<div class="meta">No NHL player with that name in the data.</div>';
+  box.hidden = false;
+}
+
+// ---- compare dialog (from the Lineup tab)
+function openCompareDialog() { renderCmpDialog(); if (!$('cmpDlg').open) $('cmpDlg').showModal(); }
+function renderCmpDialog() {
+  let m = metricById(ui.cmpMetric); if (m.type === 'pct') m = metricById('day');
+  const cols = [...ui.cmp].map(id => colFor(String(id), m)).filter(Boolean);
+  $('cmpDlg').innerHTML = `<div class="dlg-head"><div><h2 id="cmpTitle">Compare players</h2><div class="meta">${weekday(ui.day)} ${dayMonth(ui.day)} (ET). The highlighted number is the best in each row.</div></div><button class="btn small" data-close>Close</button></div>
+    <div class="dlg-body"><div class="ctrl-row" style="margin-top:0"><label class="meta">Show <select id="cmpMetric">${metricOptions(m.id).replace(/<optgroup label="League percentile">.*?<\/optgroup>/, '')}</select></label></div>
+      <p class="hint">${metricNote(m)}</p>
+      ${['S', 'G'].map(k => cols.some(c => c.kind === k) ? `<h3>${k === 'S' ? 'Skaters' : 'Goalies'}</h3><div class="table-wrap">${cmpTableHtml(cols, m, k)}</div>` : '').join('')}</div>`;
 }
 
 // ---- League percentile table
@@ -1112,6 +1625,10 @@ function renderHist() {
 function saveRoster() { try { localStorage.setItem(LS_ROSTER, JSON.stringify(roster)); } catch (e) {} }
 function saveW() { try { localStorage.setItem(LS_W, JSON.stringify(W)); } catch (e) {} }
 function resetW() { ALLC.forEach(([lab]) => W[lab] = 1); }
+async function loadProjections() {
+  try { const r = await fetch('projections.json', { cache: 'no-store' }); if (!r.ok) throw new Error('HTTP ' + r.status); return await r.json(); }
+  catch (e) { return null; }
+}
 async function loadDefaultRoster() {
   try { const r = await fetch('roster.json', { cache: 'no-store' }); const j = await r.json();
     return (j.players || []).map(p => ({ id: Number(p.id), name: p.name, status: p.status || 'Healthy', active: !!p.active }));
@@ -1128,19 +1645,40 @@ document.addEventListener('click', e => {
   else if (b.dataset.cmp) { fm.cmp = b.dataset.cmp; renderHeat(); }
   else if (b.dataset.scope) { fm.scope = b.dataset.scope; hs.scope = b.dataset.scope; fm.mode = 'windows'; renderForm(); renderHist(); renderHeat(); $('formMode').scrollIntoView({ behavior: 'smooth', block: 'center' }); }
   else if (b.dataset.fmode) { fm.mode = b.dataset.fmode; renderForm(); }
-  else if (b.dataset.fwin) { fm.win = b.dataset.fwin; renderForm(); }
+  else if (b.dataset.fview) { fm.view = b.dataset.fview; renderForm(); }
+  else if (b.dataset.fday) { ui.day = b.dataset.fday; renderForm(); }
   else if (b.dataset.ent) {
-    const e = b.dataset.ent; fm.note = '';
-    if (fm.sel.includes(e)) fm.sel = fm.sel.filter(x => x !== e);
-    else if (fm.sel.length >= MAX_SEL) fm.note = `Up to ${MAX_SEL} at a time. Remove one first.`;
-    else fm.sel.push(e);
+    const e = b.dataset.ent, all = sortedRoster().map(p => String(p.id)).concat(fm.extra);
+    if (fm.sel === null) fm.sel = all.slice();
+    fm.sel = fm.sel.includes(e) ? fm.sel.filter(x => x !== e) : fm.sel.concat(e);
     renderForm();
   }
-  else if (b.hasAttribute('data-fclear')) { fm.sel = []; fm.note = ''; renderForm(); }
+  else if (b.dataset.fquick) {
+    const q = b.dataset.fquick, rp = sortedRoster();
+    fm.sel = q === 'all' ? null : q === 'none' ? [] : rp.filter(p => p.group === q).map(p => String(p.id));
+    if (q === 'all') fm.extra = [];
+    renderForm();
+  }
+  else if (b.dataset.fextraRemove) { const e = b.dataset.fextraRemove; fm.extra = fm.extra.filter(x => x !== e); if (fm.sel) fm.sel = fm.sel.filter(x => x !== e); renderForm(); }
+  else if (b.dataset.fadd) {
+    const e = b.dataset.fadd; if (!fm.extra.includes(e)) fm.extra.push(e);
+    if (fm.sel !== null && !fm.sel.includes(e)) fm.sel.push(e);
+    $('cmpAdd').value = ''; renderCmpAdd(); renderForm();
+  }
+  else if (b.dataset.why) openWhy(b.dataset.why, b.dataset.whyday || ui.day);
+  else if (b.dataset.cmptoggle) { const id = Number(b.dataset.cmptoggle); ui.cmp.has(id) ? ui.cmp.delete(id) : ui.cmp.add(id); renderLineup(); }
+  else if (b.id === 'cmpOpen') openCompareDialog();
+  else if (b.id === 'cmpClear') { ui.cmp.clear(); renderLineup(); }
+  else if (b.dataset.banner === 'apply') {
+    const old = new Map(roster.map(r => [r.id, r]));
+    roster = fileRoster.map(f => old.has(f.id) ? old.get(f.id) : { ...f });
+    saveRoster(); render();
+  }
+  else if (b.dataset.banner === 'keep') { try { localStorage.setItem(LS_DISMISS, rosterSig(fileRoster)); } catch (e) {} renderRosterBanner(); }
   else if (b.dataset.gran) { hs.gran = b.dataset.gran; renderHist(); }
   else if (b.dataset.hp) { hs.preset = b.dataset.hp; hs.from = hs.to = null; renderHist(); }
   else if (b.dataset.hm) { hs.mode = b.dataset.hm; renderHist(); }
-  else if (b.hasAttribute('data-close')) $('dlg').close();
+  else if (b.hasAttribute('data-close')) b.closest('dialog').close();
   else if (b.id === 'adopt') {
     const lu = lineupFor(ui.day), start = new Set(['F', 'D', 'G'].flatMap(g => lu[g].filter(x => x.start).map(x => x.p.id)));
     roster.forEach(r => r.active = start.has(r.id)); saveRoster(); renderLineup();
@@ -1164,6 +1702,8 @@ document.addEventListener('change', e => {
   else if (t.dataset.w) { W[t.dataset.w] = Number(t.value); saveW(); renderCats(); }
   else if (t.id === 'specCat' || t.id === 'specAll') renderSpecialists();
   else if (t.id === 'formScope') { fm.scope = t.value; renderForm(); renderHeat(); }
+  else if (t.id === 'fmMetric') { fm.metric = t.value; renderForm(); }
+  else if (t.id === 'cmpMetric') { ui.cmpMetric = t.value; renderCmpDialog(); }
   else if (t.id === 'histScope') { hs.scope = t.value; renderHist(); }
   else if (t.id === 'histFrom' || t.id === 'histTo') {
     if ($('histFrom').value && $('histTo').value) { hs.preset = 'custom'; hs.from = $('histFrom').value; hs.to = $('histTo').value; renderHist(); }
@@ -1174,6 +1714,7 @@ document.addEventListener('change', e => {
   }
 });
 $('addSearch').addEventListener('input', renderAddResults);
+$('cmpAdd').addEventListener('input', renderCmpAdd);
 
 (async function init() {
   resetW();
@@ -1188,10 +1729,12 @@ $('addSearch').addEventListener('input', renderAddResults);
     $('fresh').textContent = 'No data';
     return;
   }
+  PROJ = await loadProjections();
   prep();
   let saved = null;
   try { saved = JSON.parse(localStorage.getItem(LS_ROSTER) || 'null'); } catch (e) {}
-  roster = saved && saved.length ? saved : await loadDefaultRoster();
+  fileRoster = await loadDefaultRoster();
+  roster = saved && saved.length ? saved : fileRoster.map(r => ({ ...r }));
   const t = etToday();
   ui.day = D.games.length && t < D.games[0].d ? D.games[0].d : t;
   ui.weekStart = mondayOf(ui.day);
